@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-MudBlazorWebApp1-27e2e93d-d09f-4005-81a3-d275d665fb5d</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot\favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="wwwroot\favicon.ico" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="Humanizer.Core" Version="2.14.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.*" />
+    <PackageReference Include="MudBlazor" Version="8.*" />
+    <PackageReference Include="Extensions.MudBlazor.StaticInput" Version="3.*" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Folder Include="Data\Migrations\" />
+    <Folder Include="wwwroot\Images\" />
+  </ItemGroup>
+
+</Project>

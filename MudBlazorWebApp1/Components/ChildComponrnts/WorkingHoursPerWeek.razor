@@ -1,0 +1,18 @@
+﻿<MudGrid Justify="Justify.FlexStart" Class="ma-1">
+    <MudItem>
+        <MudText Typo="Typo.body2">This Week</MudText>
+        <MudText Typo="Typo.body2">@($"{WeekWorkingHours.Hours}h {WeekWorkingHours.Minutes}m")</MudText>
+    </MudItem>
+
+    <MudItem>
+        <MudText Typo="Typo.body2">Pay Perioud</MudText>
+        <MudText Typo="Typo.body2">@($"{WeekWorkingHours.Hours}h {WeekWorkingHours.Minutes}m")</MudText>
+    </MudItem>
+    <MudItem Class="ml-4">
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary">My Time Sheet</MudButton>
+    </MudItem>
+</MudGrid>
+
+@code {
+    public TimeSpan WeekWorkingHours { get; set; }
+}

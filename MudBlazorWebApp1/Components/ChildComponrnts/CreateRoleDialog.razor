@@ -1,0 +1,49 @@
+﻿@inject RoleManager<Role> RoleManager
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            <MudCard>
+                <MudCardHeader>Create New Role</MudCardHeader>
+                <MudTextField Label="Name" Class="mt-3"
+                @bind-Value="model.Name" For="@(() => model.Name)" />
+                <MudCardActions>
+                    <MudSpacer />
+                    <MudButton OnClick="Cancel" Class="ml-auto">Cancel</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+                </MudCardActions>
+            </MudCard>
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <MudItem xs="12" sm="5">
+                    <MudPaper Class="pa-4 mud-height-full">
+                        <MudText Typo="Typo.subtitle2">@error</MudText>
+                    </MudPaper>
+                </MudItem>
+            }
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private void Cancel() => MudDialog.Cancel();
+    private CreateRoleModel model { get; set; } = new();
+    private string error { get; set; }
+    public class CreateRoleModel
+    {
+        [Required]
+        public string Name { get; set; }
+    }
+    private async Task OnValidSubmit(EditContext context)
+    {
+        var role = new Role
+            {
+                Name = model.Name
+            };
+        await RoleManager.CreateAsync(role);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

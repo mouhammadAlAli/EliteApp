@@ -1,0 +1,63 @@
+﻿@page "/"
+@attribute [Authorize]
+@inject AuthenticationStateProvider AuthProvider
+
+<PageTitle>Home</PageTitle>
+
+<MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Secondary">@context.User.Identity?.Name?.First()</MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.body1">Hello, @context.User.Identity?.Name</MudText>
+                        <MudText Typo="Typo.body2">Role</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+             </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            @* <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper> *@
+        </MudItem>
+        @* <MudItem xs="12" sm="12" md="4"> *@
+        @*     <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper> *@
+        @* </MudItem> *@
+        <MudItem xs="12" sm="6">
+            <MudGrid>
+                <MudItem xs="12">
+                    <MyTime/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%"></MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+
+
+
+@code{
+    public AuthenticationState context { get; set; }
+    
+    protected override async void OnInitialized()
+    {
+        context = await AuthProvider.GetAuthenticationStateAsync();
+    }
+}

@@ -1,0 +1,17 @@
+﻿@using MudBlazorWebApp1.Components.Account.Shared
+
+<CascadingAuthenticationState>
+    <Router AppAssembly="typeof(Program).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                <NotAuthorized>
+                    <AccessDenied/>
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <p>Sorry, the page you requested could not be found.</p>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

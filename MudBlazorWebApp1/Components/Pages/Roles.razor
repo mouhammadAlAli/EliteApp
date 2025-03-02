@@ -1,0 +1,92 @@
+﻿@page "/Roles"
+@inject RoleManager<Role> RoleManager
+@inject IDialogService Dialog
+@attribute [Authorize(Roles = AppConsts.UserConsts.AdminRole)]
+
+
+
+<PageTitle>Roles</PageTitle>
+
+<MudTable ServerData="ServerReload" Dense="true" Hover="true" Bordered="false" @ref=table>
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Roles</MudText>
+        <MudSpacer />
+        <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        <MudSpacer />
+        <MudFab OnClick="@(() => OpenDialogAsync(_backdropClick))" Label="New Role" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Id</MudTh>
+        <MudTh>Name</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Last Name">@context.Name</MudTd>
+        <MudTd DataLabel="Actions">
+            <MudToolBar>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
+                <MudSwitch id="@context.Id" @bind-Value="Basic_Switch1" Color="Color.Success" UncheckedColor="Color.Error" />
+            </MudToolBar>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+
+
+
+@code {
+    private string searchString = "";
+    public bool Basic_Switch1 { get; set; } = false;
+    private MudTable<Role> table;
+    private readonly DialogOptions _backdropClick = new() { BackdropClick = false, FullWidth = true };
+    private async Task<TableData<Role>> ServerReload(TableState state, CancellationToken token)
+    {
+        var roleQuery = RoleManager.Roles.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            var s = searchString.ToLower();
+            roleQuery = roleQuery.Where(element =>
+                element.Name.ToLower().Contains(s)
+            );
+        }
+
+        // Get the total count of items (filtered or not)
+        var totalItems = await roleQuery.CountAsync();
+
+        // Apply pagination: skip rows for the current page and take the page size
+        var pagedData = await roleQuery
+                                .Skip(state.Page * state.PageSize)
+                                .Take(state.PageSize)
+                                .ToListAsync();
+
+        return new TableData<Role>()
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
+    }
+    private async void OnSearch(string text)
+    {
+        if (!string.IsNullOrEmpty(text))
+        {
+            searchString = text;
+            await table.ReloadServerData();
+        }
+    }
+    private Task OpenDialogAsync(DialogOptions options)
+    {
+        return Dialog.ShowAsync<CreateRoleDialog>("", options);
+    }
+}

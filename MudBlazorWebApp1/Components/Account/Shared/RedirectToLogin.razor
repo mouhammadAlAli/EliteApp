@@ -1,0 +1,12 @@
+﻿@inject NavigationManager NavigationManager
+
+@code {
+    protected override void OnInitialized()
+    {
+        var currentUrl = NavigationManager.Uri;
+        if (!currentUrl.Contains("Account/Login"))
+        {
+            NavigationManager.NavigateTo($"Account/Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}", forceLoad: true);
+        }
+    }
+}

@@ -1,0 +1,113 @@
+﻿@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.IdentityModel.Tokens
+@inject IEmailSender<User> EmailSender
+@inject UserManager<User> UserManager
+@inject IUserStore<User> UserStore
+@inject NavigationManager NavigationManager
+@inject RoleManager<Role> RoleManager
+
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            <MudCard>
+                <MudCardHeader>Create New User</MudCardHeader>
+                <MudTextField Label="First name" Class="mt-3"
+                @bind-Value="model.FirstName" For="@(() => model.FirstName)" />
+                <MudTextField Label="Last name" Class="mt-3"
+                @bind-Value="model.LastName" For="@(() => model.LastName)" />
+                <MudTextField Label="Email" Class="mt-3"
+                @bind-Value="model.Email" For="@(() => model.Email)" />
+                <MudSelect T="Role" For="@(() => model.Role)" Label="Roles" MultiSelection="false" @bind-Value="model.Role" Required ="true" RequiredError="Please Select a Role">
+                    @foreach (var role in _roles)
+                    {
+                        <MudSelectItem T="Role" Value="@role">@role.Name</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudCardActions>
+                    <MudSpacer />
+                    <MudButton OnClick="Cancel" Class="ml-auto">Cancel</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+                </MudCardActions>
+            </MudCard>
+            @if (!identityErrors.IsNullOrEmpty())
+            {
+                <MudItem xs="12" sm="5">
+                    <MudPaper Class="pa-4 mud-height-full">
+                        <MudText Typo="Typo.subtitle2">@($"Errors:")</MudText>
+                        @foreach (var error in identityErrors)
+                        {
+                            <MudText Color="@Color.Error">@error.Description</MudText>
+                        }
+
+                    </MudPaper>
+                </MudItem>
+            }
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private void Cancel() => MudDialog.Cancel();
+    RegisterAccountForm model = new RegisterAccountForm();
+    private IEnumerable<IdentityError>? identityErrors;
+    private List<Role> _roles = new();
+    bool success;
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _roles = await RoleManager.Roles.ToListAsync();
+    }
+    public class RegisterAccountForm
+    {
+        [Required]
+        public string FirstName { get; set; }
+
+        [Required]
+        public string LastName { get; set; }
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+        [Required]
+        public Role Role { get; set; }
+
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        success = true;
+        var user = new User
+            {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Email = model.Email,
+                UserName = model.Email
+            };
+        var result = await UserManager.CreateAsync(user, "123456");
+
+        if (!result.Succeeded)
+        {
+            identityErrors = result.Errors;
+            return;
+        }
+        var createdUser = await UserManager.FindByEmailAsync(model.Email);
+        await UserManager.AddToRoleAsync(createdUser, model.Role.Name);
+        // var userId = await UserManager.GetUserIdAsync(user);
+        // var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+        // code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+        // var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+        //     NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+        //     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+
+        // await EmailSender.SendConfirmationLinkAsync(user, model.Email, HtmlEncoder.Default.Encode(callbackUrl));
+        MudDialog.Close(DialogResult.Ok(true));
+
+    }
+}
+

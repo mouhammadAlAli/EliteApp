@@ -1,0 +1,55 @@
+﻿@using Humanizer
+<MudCard Square="true" Outlined="true">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudGrid Justify="Justify.FlexStart">
+                <MudItem>
+                    <MudIcon Color ="Color.Primary" Icon="@Icons.Material.Outlined.AccessAlarm" />
+                </MudItem>
+                <MudItem>
+                    <MudText Color="Color.Primary">My Time</MudText>
+                </MudItem>
+            </MudGrid>
+            <MudDivider />
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudGrid Justify="Justify.Center">
+            <MudItem>
+                <MudText>@isClickedInTitle</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudGrid Justify="Justify.Center">
+            <MudItem>
+                <MudText Typo="Typo.h4" Color="@WorkingHourDisplayColor">@($"{WorkingHourToday.Hours}h {WorkingHourToday.Minutes}m Today")</MudText>
+                <MudText Typo="Typo.body2">@LastClock</MudText>
+            </MudItem>
+        </MudGrid>
+        <div class="d-flex justify-center">
+            <MudButton OnClick="Submit" StartIcon="@StartIcon" Variant="Variant.Filled" Color="Color.Primary" Class="ma-3" FullWidth = "true">
+                @ButtonString
+            </MudButton>
+        </div>
+        <MudText Class="ma-1" Typo="Typo.body2">@($"Today -> {WorkingHourToday.Hours}h {WorkingHourToday.Minutes}m")</MudText>
+        <MudText Class="ma-1" Typo="Typo.body2">@($"{ClockedInTime.Humanize()} - {ClockedOutTime.Humanize()} > {WorkingHourToday.Hours}h {WorkingHourToday.Minutes}m")</MudText>
+        <MudLink Class="ma-1" Typo="Typo.body2">+ Add Time Entry</MudLink>
+        <MudSpacer/>
+        <MudDivider />
+        <WorkingHoursPerWeek/>
+    </MudCardContent>
+</MudCard>
+@code{
+    private DateTime ClockedInTime = DateTime.UtcNow;
+    private DateTime ClockedOutTime = DateTime.UtcNow.AddHours(20);
+    private bool isClockedIn = false;
+    private string isClickedInTitle => isClockedIn ? "Clocked In" : "Not Clocked In";
+    private TimeSpan WorkingHourToday => ClockedOutTime - ClockedInTime;
+    private Color WorkingHourDisplayColor => isClockedIn ? Color.Success : Color.Primary;
+    private string ButtonString => isClockedIn ? "Clocked Out" : "Clock In";
+    private string StartIcon => isClockedIn ? Icons.Material.Outlined.Stop : Icons.Material.Outlined.Timer;
+    private string LastClock => isClockedIn ? $"Clocked In: {ClockedInTime.Humanize()}" : $"Clocked Out: {ClockedOutTime.Humanize()}";
+
+    private void Submit(){
+        isClockedIn = !isClockedIn;
+    }
+}
