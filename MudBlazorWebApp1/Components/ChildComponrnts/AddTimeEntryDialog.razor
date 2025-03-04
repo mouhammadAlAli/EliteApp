@@ -1,0 +1,38 @@
+﻿<MudDialog>
+    <TitleContent>
+        Enter Time Worked
+    </TitleContent>
+    <DialogContent>
+        <MudGrid Justify="Justify.FlexStart">
+            <MudItem>
+                <MudDatePicker PickerVariant="PickerVariant.Dialog" Label="Day" DateFormat="dd/MM/yyyy" Date="@(DateTime.Now)" />
+            </MudItem>
+            <MudItem>
+                <MudText Class="mt-5" >@DateTime.Now.DayOfWeek</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudSpacer/>
+        <MudGrid Class="mt-4">
+            <MudItem>
+                <MudTimePicker Label="From" AmPm="true" TimeFormat="h:mm tt" @bind-Time="_time" />
+            </MudItem>
+            <MudItem>
+                <MudTimePicker Label="To" AmPm="true" TimeFormat="h:mm tt" @bind-Time="_time" />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private TimeSpan? _time = new TimeSpan(00, 45, 00);
+
+    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
+
+    private void Cancel() => MudDialog.Cancel();
+}

@@ -1,4 +1,6 @@
 ﻿@using Humanizer
+@inject IDialogService DialogService
+
 <MudCard Square="true" Outlined="true">
     <MudCardHeader>
         <CardHeaderContent>
@@ -10,7 +12,7 @@
                     <MudText Color="Color.Primary">My Time</MudText>
                 </MudItem>
             </MudGrid>
-            <MudDivider />
+            <MudDivider Style="width: 100%;" />
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
@@ -32,7 +34,7 @@
         </div>
         <MudText Class="ma-1" Typo="Typo.body2">@($"Today -> {WorkingHourToday.Hours}h {WorkingHourToday.Minutes}m")</MudText>
         <MudText Class="ma-1" Typo="Typo.body2">@($"{ClockedInTime.Humanize()} - {ClockedOutTime.Humanize()} > {WorkingHourToday.Hours}h {WorkingHourToday.Minutes}m")</MudText>
-        <MudLink Class="ma-1" Typo="Typo.body2">+ Add Time Entry</MudLink>
+        <MudLink @onclick="OpenDialogAsync" Class="ma-1" Typo="Typo.body2">+ Add Time Entry</MudLink>
         <MudSpacer/>
         <MudDivider />
         <WorkingHoursPerWeek/>
@@ -48,7 +50,12 @@
     private string ButtonString => isClockedIn ? "Clocked Out" : "Clock In";
     private string StartIcon => isClockedIn ? Icons.Material.Outlined.Stop : Icons.Material.Outlined.Timer;
     private string LastClock => isClockedIn ? $"Clocked In: {ClockedInTime.Humanize()}" : $"Clocked Out: {ClockedOutTime.Humanize()}";
+    private Task OpenDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, CloseButton = true, BackdropClick = false };
 
+        return DialogService.ShowAsync<AddTimeEntryDialog>("Simple Dialog", options);
+    }
     private void Submit(){
         isClockedIn = !isClockedIn;
     }

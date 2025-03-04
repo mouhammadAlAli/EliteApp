@@ -1,0 +1,74 @@
+﻿<MudCard Square="true" Outlined="true">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudGrid Justify="Justify.FlexStart">
+                <MudItem>
+                    <MudIcon Color="Color.Primary" Icon="@Icons.Material.Outlined.CalendarMonth" />
+                </MudItem>
+                <MudItem>
+                    <MudText Color="Color.Primary">Time Off</MudText>
+                </MudItem>
+            </MudGrid>
+            <MudDivider Style="width: 100%;" />
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudGrid Justify="Justify.SpaceAround">
+            <MudItem>
+                <MudStack Justify="Justify.Center">
+                    <MudText Typo="Typo.body1" Class="ml-5">Vacation</MudText>
+                    <MudGrid>
+                        <MudItem>
+                            <MudIcon Color="Color.Primary" Icon="@Icons.Material.Filled.Surfing" Size="Size.Large" />
+                        </MudItem>
+                        <MudItem>
+                            <MudText Color="Color.Primary" Typo="Typo.h6">23.6</MudText>
+                        </MudItem>
+                    </MudGrid>
+                    <MudText Color="Color.Primary" Typo="Typo.body1">Hours available</MudText>
+                    <MudText Typo="Typo.body2">48 hours scheduled</MudText>
+                </MudStack>
+            </MudItem>
+            <MudItem>
+                <MudItem>
+                    <MudStack Justify="Justify.Center">
+                        <MudText Typo="Typo.body1" Class="ml-8">Sick</MudText>
+                        <MudGrid>
+                            <MudItem>
+                                <MudIcon Color="Color.Primary" Icon="@Icons.Material.Filled.Sick" Size="Size.Large" />
+                            </MudItem>
+                            <MudItem>
+                                <MudText Color="Color.Primary" Typo="Typo.h6">23.6</MudText>
+                            </MudItem>
+                        </MudGrid>
+                        <MudText Color="Color.Primary" Typo="Typo.body1">Hours available</MudText>
+                        <MudText Typo="Typo.body2">48 hours scheduled</MudText>
+                    </MudStack>
+                </MudItem>
+            </MudItem>
+        </MudGrid>
+        <MudGrid Justify="Justify.Center" Spacing="1">
+            <MudItem Xs="12">
+                <MudGrid>
+                    <MudItem Xs="10">
+                        <MudButton OnClick="Submit" Variant="Variant.Outlined" Color="Color.Primary" Class="ma-3" FullWidth="true">
+                            Request Time Off
+                        </MudButton>
+                    </MudItem>
+                    <MudItem Xs="2">
+                        <MudIconButton Class="mt-1" Icon="@Icons.Material.Outlined.CalendarMonth" Color="Color.Primary" aria-label="calendar" />
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+        </MudGrid>
+        
+        <MudSpacer />
+    </MudCardContent>
+</MudCard>
+@code {
+   
+
+    private void Submit()
+    {
+    }
+}

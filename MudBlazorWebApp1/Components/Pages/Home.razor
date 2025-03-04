@@ -4,7 +4,7 @@
 
 <PageTitle>Home</PageTitle>
 
-<MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">
+<MudContainer Class="px-8" MaxWidth="MaxWidth.False">
     <MudGrid>
         <MudItem xs="12" sm="6" md="4">
             <MudCard>
@@ -20,32 +20,41 @@
              </MudCard>
         </MudItem>
         <MudItem xs="12" sm="6" md="4">
-            @* <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper> *@
         </MudItem>
-        @* <MudItem xs="12" sm="12" md="4"> *@
-        @*     <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper> *@
-        @* </MudItem> *@
+        @* My time + time off *@
         <MudItem xs="12" sm="6">
             <MudGrid>
                 <MudItem xs="12">
                     <MyTime/>
                 </MudItem>
                 <MudItem xs="12">
-                    <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+                    <TimeOff/>
+                </MudItem>
+                <MudItem xs="12">
+                    <MyStuff />
                 </MudItem>
             </MudGrid>
         </MudItem>
+         @* right side *@
         <MudItem xs="12" sm="6">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 100%"></MudPaper>
+            <MudPaper Elevation="2" Style="height: 100%">
+                <Announcements />
+            </MudPaper>
         </MudItem>
         <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
+                1
+            </MudPaper>
         </MudItem>
         <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
+                2
+            </MudPaper>
         </MudItem>
         <MudItem xs="12" sm="12" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"></MudPaper>
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
+                3
+            </MudPaper>
         </MudItem>
     </MudGrid>
 </MudContainer>
