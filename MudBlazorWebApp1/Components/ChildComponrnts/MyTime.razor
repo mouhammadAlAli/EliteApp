@@ -1,12 +1,13 @@
-﻿@using Humanizer
-@inject IDialogService DialogService
+﻿@inject IDialogService DialogService
+@inject ApplicationDbContext _context
+@inject ICurrentUserService CurrentUserService;
 
 <MudCard Square="true" Outlined="true">
     <MudCardHeader>
         <CardHeaderContent>
             <MudGrid Justify="Justify.FlexStart">
                 <MudItem>
-                    <MudIcon Color ="Color.Primary" Icon="@Icons.Material.Outlined.AccessAlarm" />
+                    <MudIcon Color="Color.Primary" Icon="@Icons.Material.Outlined.AccessAlarm" />
                 </MudItem>
                 <MudItem>
                     <MudText Color="Color.Primary">My Time</MudText>
@@ -16,47 +17,210 @@
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
-        <MudGrid Justify="Justify.Center">
-            <MudItem>
-                <MudText>@isClickedInTitle</MudText>
-            </MudItem>
-        </MudGrid>
-        <MudGrid Justify="Justify.Center">
-            <MudItem>
-                <MudText Typo="Typo.h4" Color="@WorkingHourDisplayColor">@($"{WorkingHourToday.Hours}h {WorkingHourToday.Minutes}m Today")</MudText>
-                <MudText Typo="Typo.body2">@LastClock</MudText>
-            </MudItem>
-        </MudGrid>
-        <div class="d-flex justify-center">
-            <MudButton OnClick="Submit" StartIcon="@StartIcon" Variant="Variant.Filled" Color="Color.Primary" Class="ma-3" FullWidth = "true">
-                @ButtonString
-            </MudButton>
-        </div>
-        <MudText Class="ma-1" Typo="Typo.body2">@($"Today -> {WorkingHourToday.Hours}h {WorkingHourToday.Minutes}m")</MudText>
-        <MudText Class="ma-1" Typo="Typo.body2">@($"{ClockedInTime.Humanize()} - {ClockedOutTime.Humanize()} > {WorkingHourToday.Hours}h {WorkingHourToday.Minutes}m")</MudText>
-        <MudLink @onclick="OpenDialogAsync" Class="ma-1" Typo="Typo.body2">+ Add Time Entry</MudLink>
-        <MudSpacer/>
-        <MudDivider />
-        <WorkingHoursPerWeek/>
+        @if (IsLoading)
+        {
+            <MudGrid Justify="Justify.Center">
+                <MudItem>
+                    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+                </MudItem>
+            </MudGrid>
+        }else{
+            <MudGrid Justify="Justify.Center">
+                <MudItem>
+                    <MudText>@isClickedInTitle</MudText>
+                </MudItem>
+            </MudGrid>
+            <MudGrid Justify="Justify.Center">
+                <MudItem>
+                    <MudGrid>
+                        <MudItem>
+                            <MudText Typo="Typo.h4" Color="@WorkingHourDisplayColor">@WorkingHoursTitle</MudText>
+                        </MudItem>
+                        @if (IsClockedIn)
+                        {
+                            <MudItem>
+                                <MudIcon Class="mt-2" Icon="@Icons.Material.Outlined.Timer" Color="@WorkingHourDisplayColor" Size="Size.Large"></MudIcon>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                    <MudText Typo="Typo.body2">@LastClock</MudText>
+                </MudItem>
+            </MudGrid>
+            <div class="d-flex justify-center">
+                <MudButton OnClick="Submit" StartIcon="@StartIcon" Variant="Variant.Filled" Color="Color.Primary" Class="ma-3" FullWidth="true">
+                    @ButtonString
+                </MudButton>
+            </div>
+            <MudText Class="ma-1" Typo="Typo.body2">@(ClockedInTime.HasValue ? $"Today -> {WorkingHoursAllDay.Hours}h {WorkingHoursAllDay.Minutes}m" : "")</MudText>
+            <MudText Class="ma-1" Typo="Typo.body2">@(ClockedInTime.HasValue ? $"{ClockedInTime.Humanize()} - {(ClockedOutTime.HasValue ? ClockedOutTime.Humanize() : "Now")} > {WorkingHoursLastSession.Hours}h {WorkingHoursLastSession.Minutes}m" : "")</MudText>
+            <MudLink @onclick="OpenDialogAsync" Class="ma-1" Typo="Typo.body2">+ Add Time Entry</MudLink>
+            <MudSpacer />
+            <MudDivider />
+            <WorkingHoursPerWeek WeekWorkingHours="@WeekWorkingHours" />
+        }   
     </MudCardContent>
 </MudCard>
-@code{
-    private DateTime ClockedInTime = DateTime.UtcNow;
-    private DateTime ClockedOutTime = DateTime.UtcNow.AddHours(20);
-    private bool isClockedIn = false;
-    private string isClickedInTitle => isClockedIn ? "Clocked In" : "Not Clocked In";
-    private TimeSpan WorkingHourToday => ClockedOutTime - ClockedInTime;
-    private Color WorkingHourDisplayColor => isClockedIn ? Color.Success : Color.Primary;
-    private string ButtonString => isClockedIn ? "Clocked Out" : "Clock In";
-    private string StartIcon => isClockedIn ? Icons.Material.Outlined.Stop : Icons.Material.Outlined.Timer;
-    private string LastClock => isClockedIn ? $"Clocked In: {ClockedInTime.Humanize()}" : $"Clocked Out: {ClockedOutTime.Humanize()}";
-    private Task OpenDialogAsync()
+@code {
+    private UserWorkingPeriod? CurrentWorkingPeriod;
+    private DateTime? ClockedInTime;
+    private DateTime? ClockedOutTime;
+    private int UserId;
+    private bool IsClockedIn;
+    private TimeSpan WorkingHoursAllDay;
+    private TimeSpan WeekWorkingHours;
+    private System.Threading.Timer? _timer;
+    private TimeSpan ElapsedTime = TimeSpan.Zero;
+    private string isClickedInTitle => IsClockedIn ? "Clocked In" : "Not Clocked In";
+    private string WorkingHoursTitle => IsClockedIn ? $"{WorkingHoursLastSession.Hours}h {WorkingHoursLastSession.Minutes}m" : "No Active Session";
+    private TimeSpan WorkingHoursLastSession => IsClockedIn && ClockedInTime.HasValue
+       ? DateTime.UtcNow - ClockedInTime.Value
+       : (ClockedOutTime.HasValue && ClockedInTime.HasValue ? ClockedOutTime.Value - ClockedInTime.Value : TimeSpan.Zero);
+    private Color WorkingHourDisplayColor => IsClockedIn ? Color.Success : Color.Primary;
+    private string ButtonString => IsClockedIn ? "Clock Out" : "Clock In";
+    private string StartIcon => IsClockedIn ? Icons.Material.Outlined.Stop : Icons.Material.Outlined.Timer;
+    private string LastClock => IsClockedIn ? $"Clocked In: {ClockedInTime.Humanize()}" : $"Clocked Out: {ClockedOutTime.Humanize()}";
+    private bool IsLoading = true;
+    protected override async Task OnInitializedAsync()
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, FullWidth = true, CloseButton = true, BackdropClick = false };
+        IsLoading = true;
+        try
+        {
+            UserId = await CurrentUserService.GetCurrentUserIdAsync();
+            CurrentWorkingPeriod = await _context.UserWorkingPeriods
+                .Where(x => x.UserId == UserId)
+                .OrderByDescending(x => x.Id)
+                .FirstOrDefaultAsync();
 
-        return DialogService.ShowAsync<AddTimeEntryDialog>("Simple Dialog", options);
+            var today = DateTime.UtcNow.Date;
+            var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+            var endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);
+
+            var periodsThisWeek = await _context.UserWorkingPeriods
+                .Where(wp => wp.Date >= startOfWeek && wp.Date <= endOfWeek && wp.UserId == UserId)
+                .OrderBy(wp => wp.Date)
+                .ToListAsync();
+
+            WeekWorkingHours = TimeSpan.Zero;
+            foreach (var period in periodsThisWeek)
+            {
+                if (period.To.HasValue)
+                    WeekWorkingHours += period.To.Value - period.From;
+            }
+
+            WorkingHoursAllDay = TimeSpan.Zero;
+            foreach (var period in periodsThisWeek.Where(x => x.Date.Date == today))
+            {
+                if (period.To.HasValue)
+                    WorkingHoursAllDay += period.To.Value - period.From;
+            }
+
+            if (CurrentWorkingPeriod == null)
+                IsClockedIn = false;
+            else
+            {
+                if (!CurrentWorkingPeriod.To.HasValue)
+                {
+                    IsClockedIn = true;
+                    ClockedInTime = CurrentWorkingPeriod.From;
+                    ElapsedTime = DateTime.UtcNow - ClockedInTime.Value;
+                    StartTimer();
+                }
+                else
+                {
+                    IsClockedIn = false;
+                    ClockedOutTime = CurrentWorkingPeriod.To;
+                    ClockedInTime = CurrentWorkingPeriod.From;
+                }
+            }
+        }
+        finally
+        {
+            IsLoading = false; 
+            StateHasChanged();
+        }
     }
-    private void Submit(){
-        isClockedIn = !isClockedIn;
+
+    private async Task Submit()
+    {
+        if (IsClockedIn)
+        {
+            ClockedOutTime = DateTime.UtcNow;
+            IsClockedIn = false;
+
+
+            if (CurrentWorkingPeriod != null)
+            {
+                CurrentWorkingPeriod.To = ClockedOutTime;
+                _context.UserWorkingPeriods.Update(CurrentWorkingPeriod);
+                await _context.SaveChangesAsync();
+            }
+            StopTimer();
+        }
+        else
+        {
+            ClockedInTime = DateTime.UtcNow;
+            ClockedOutTime = null;
+            IsClockedIn = true;
+
+            CurrentWorkingPeriod = new UserWorkingPeriod
+                {
+                    UserId = UserId,
+                    Date = DateTime.UtcNow.Date,
+                    From = ClockedInTime.Value,
+                    IsFromEntry = false
+                };
+
+            await _context.UserWorkingPeriods.AddAsync(CurrentWorkingPeriod);
+            await _context.SaveChangesAsync();
+            StartTimer();
+        }
+        StateHasChanged();
+    }
+    private void StartTimer()
+    {
+        _timer?.Dispose(); 
+        _timer = new System.Threading.Timer(async _ =>
+        {
+            if (IsClockedIn && ClockedInTime.HasValue)
+            {
+                ElapsedTime = DateTime.UtcNow - ClockedInTime.Value;
+                await InvokeAsync(StateHasChanged);
+            }
+        }, null, 0, 5000); 
+    }
+
+    private void StopTimer()
+    {
+        _timer?.Dispose();
+        _timer = null;
+    }
+    private async Task OpenDialogAsync()
+    {
+        try
+        {
+            
+            var parameters = new DialogParameters
+        {
+            { "UserId", UserId } 
+        };
+
+            
+            var options = new DialogOptions
+                {
+                    CloseOnEscapeKey = true,
+                    FullWidth = true,
+                    CloseButton = true,
+                    BackdropClick = false
+                };
+
+            var dialog = await DialogService.ShowAsync<AddTimeEntryDialog>("Enter Time", parameters, options);
+
+            // Await the result of the dialog
+            var result = await dialog.Result;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"An error occurred: {ex.Message}");
+        }
     }
 }

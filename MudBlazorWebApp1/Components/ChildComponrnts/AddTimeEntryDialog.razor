@@ -1,38 +1,68 @@
-﻿<MudDialog>
+﻿@inject ApplicationDbContext _context
+<MudDialog>
     <TitleContent>
-        Enter Time Worked
+        Enter Time
     </TitleContent>
     <DialogContent>
-        <MudGrid Justify="Justify.FlexStart">
-            <MudItem>
-                <MudDatePicker PickerVariant="PickerVariant.Dialog" Label="Day" DateFormat="dd/MM/yyyy" Date="@(DateTime.Now)" />
-            </MudItem>
-            <MudItem>
-                <MudText Class="mt-5" >@DateTime.Now.DayOfWeek</MudText>
-            </MudItem>
-        </MudGrid>
-        <MudSpacer/>
-        <MudGrid Class="mt-4">
-            <MudItem>
-                <MudTimePicker Label="From" AmPm="true" TimeFormat="h:mm tt" @bind-Time="_time" />
-            </MudItem>
-            <MudItem>
-                <MudTimePicker Label="To" AmPm="true" TimeFormat="h:mm tt" @bind-Time="_time" />
-            </MudItem>
-        </MudGrid>
+        <MudCard>
+            <MudGrid Justify="Justify.FlexStart">
+                <MudItem>
+                    <MudDatePicker Label="Date" Editable="true" @bind-Date="Date" Mask="@(new DateMask("dd.MM.yyyy"))" DateFormat="dd.MM.yyyy" Variant="Variant.Text" />
+
+                    @* <MudDatePicker PickerVariant="PickerVariant.Dialog" Label="Day" DateFormat="dd/MM/yyyy" @bind-Date="Date"/> *@
+                </MudItem>
+                <MudItem>
+                    <MudText Class="mt-5">@CurrentDay</MudText>
+                </MudItem>
+            </MudGrid>
+            <MudSpacer />
+            <MudGrid Class="mt-4">
+                <MudItem>
+                    <MudTimePicker Label="From" AmPm="true" TimeFormat="h:mm tt" @bind-Time="From" />
+                </MudItem>
+                <MudItem>
+                    <MudTimePicker Label="To" AmPm="true" TimeFormat="h:mm tt" @bind-Time="To" />
+                </MudItem>
+            </MudGrid>
+            <MudCardActions>
+                <MudSpacer />
+                <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+                <MudButton OnClick="OnValidSubmit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Save</MudButton>
+            </MudCardActions>
+        </MudCard>
     </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit">Save</MudButton>
-    </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
-    private TimeSpan? _time = new TimeSpan(00, 45, 00);
-
-    private void Submit() => MudDialog.Close(DialogResult.Ok(true));
-
+    private string CurrentDay => Date?.DayOfWeek.ToString();
+    private DateTime? Date  = DateTime.UtcNow;
+    private TimeSpan? From = TimeSpan.Zero;
+    private TimeSpan? To = TimeSpan.Zero;
+    [Parameter]
+    public int UserId { get; set; }
     private void Cancel() => MudDialog.Cancel();
+    private async Task OnValidSubmit()
+    {
+        if (From == null || To == null || Date == null || From > To)
+        {
+            return;
+        }
+
+        var userWorkingPeriod = new UserWorkingPeriod
+            {
+                UserId = UserId,
+                Date = Date.Value,
+                From = Date?.Add(From.Value) ??DateTime.UtcNow,
+                To = Date?.Add(To.Value) ,
+                IsFromEntry = true 
+            };
+
+        _context.UserWorkingPeriods.Add(userWorkingPeriod);
+
+        await _context.SaveChangesAsync();
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
 }

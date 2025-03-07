@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -7,6 +8,7 @@ using MudBlazorWebApp1.Components.Account;
 using MudBlazorWebApp1.Data;
 using MudBlazorWebApp1.Data.Entities.Identity;
 using MudBlazorWebApp1.Data.Repositories;
+using MudBlazorWebApp1.Data.Services.AuthServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,8 @@ builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuth
 //    })
 //    .AddIdentityCookies();
 
+builder.Services.Configure<CircuitOptions>(options => options.DetailedErrors = true);
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -47,6 +51,7 @@ builder.Services.AddIdentity<User, Role>(options =>
 builder.Services.AddAuthorizationCore();
 builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 var app = builder.Build();
 
