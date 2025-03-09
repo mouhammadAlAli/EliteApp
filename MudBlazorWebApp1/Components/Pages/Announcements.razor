@@ -1,29 +1,32 @@
-﻿@page "/Roles"
-@inject RoleManager<Role> RoleManager
+﻿@page "/Announcements"
 @inject IDialogService Dialog
+@inject ApplicationDbContext ApplicationDbContext
 @attribute [Authorize(Roles = AppConsts.UserConsts.AdminRole)]
 
 <MudTable ServerData="ServerReload" Dense="true" Hover="true" Bordered="false" @ref=table>
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Roles</MudText>
+        <MudText Typo="Typo.h6">Announcements</MudText>
         <MudSpacer />
         <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         <MudSpacer />
-        <MudFab OnClick="@(() => OpenDialogAsync(_backdropClick))" Label="New Role" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
+        <MudFab OnClick="@(() => OpenDialogAsync())" Label="New Announcement" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
     </ToolBarContent>
     <HeaderContent>
         <MudTh>Id</MudTh>
-        <MudTh>Name</MudTh>
+        <MudTh>Title</MudTh>
+        <MudTh>Description</MudTh>
+        <MudTh>Team</MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Id">@context.Id</MudTd>
-        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Title">@context.Title</MudTd>
+        <MudTd DataLabel="Description">@context.Title</MudTd>
+        <MudTd DataLabel="Team">@(context.Team != null ? context.Team.Name :  "All")</MudTd>
         <MudTd DataLabel="Actions">
             <MudToolBar>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
-                <MudSwitch id="@context.Id" @bind-Value="Basic_Switch1" Color="Color.Success" UncheckedColor="Color.Error" />
             </MudToolBar>
         </MudTd>
     </RowTemplate>
@@ -44,30 +47,28 @@
 @code {
     private string searchString = "";
     public bool Basic_Switch1 { get; set; } = false;
-    private MudTable<Role> table;
-    private readonly DialogOptions _backdropClick = new() { BackdropClick = false, FullWidth = true };
-    private async Task<TableData<Role>> ServerReload(TableState state, CancellationToken token)
+    private MudTable<Announcement> table;
+    private async Task<TableData<Announcement>> ServerReload(TableState state, CancellationToken token)
     {
-        var roleQuery = RoleManager.Roles.AsQueryable();
+        var query = ApplicationDbContext.Announcements.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(searchString))
         {
             var s = searchString.ToLower();
-            roleQuery = roleQuery.Where(element =>
-                element.Name.ToLower().Contains(s)
+            query = query.Where(element =>
+                element.Title.ToLower().Contains(s)
             );
         }
 
-        // Get the total count of items (filtered or not)
-        var totalItems = await roleQuery.CountAsync();
+        var totalItems = await query.CountAsync();
 
         // Apply pagination: skip rows for the current page and take the page size
-        var pagedData = await roleQuery
+        var pagedData = await query
                                 .Skip(state.Page * state.PageSize)
                                 .Take(state.PageSize)
                                 .ToListAsync();
 
-        return new TableData<Role>()
+        return new TableData<Announcement>()
             {
                 TotalItems = totalItems,
                 Items = pagedData
@@ -81,9 +82,17 @@
             await table.ReloadServerData();
         }
     }
-    private async Task OpenDialogAsync(DialogOptions options)
+    private async Task OpenDialogAsync()
     {
-        await Dialog.ShowAsync<CreateRoleDialog>("", options);
+        var options = new DialogOptions
+            {
+                CloseOnEscapeKey = true,
+                FullWidth = true,
+                CloseButton = true,
+                BackdropClick = false
+            };
+        await Dialog.ShowAsync<CreateAnnouncementDialog>("New Announcement", options);
         StateHasChanged();
+        await table.ReloadServerData();
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MudBlazorWebApp1.Data;
 
@@ -11,9 +12,11 @@ using MudBlazorWebApp1.Data;
 namespace MudBlazorWebApp1.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250307143352_Add-Teams-Table")]
+    partial class AddTeamsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -128,32 +131,6 @@ namespace MudBlazorWebApp1.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("UserTokens", "Identity");
-                });
-
-            modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.Announcement", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("TeamId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TeamId");
-
-                    b.ToTable("Announcements");
                 });
 
             modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.Attachment", b =>
@@ -311,9 +288,6 @@ namespace MudBlazorWebApp1.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
                     b.Property<int>("LeaderId")
                         .HasColumnType("int");
 
@@ -413,23 +387,11 @@ namespace MudBlazorWebApp1.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.Announcement", b =>
-                {
-                    b.HasOne("MudBlazorWebApp1.Data.Entities.Team", "Team")
-                        .WithMany()
-                        .HasForeignKey("TeamId");
-
-                    b.Navigation("Team");
-                });
-
             modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.Identity.User", b =>
                 {
-                    b.HasOne("MudBlazorWebApp1.Data.Entities.Team", "Team")
+                    b.HasOne("MudBlazorWebApp1.Data.Entities.Team", null)
                         .WithMany("Members")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Team");
+                        .HasForeignKey("TeamId");
                 });
 
             modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.Team", b =>
@@ -437,7 +399,7 @@ namespace MudBlazorWebApp1.Migrations
                     b.HasOne("MudBlazorWebApp1.Data.Entities.Identity.User", "Leader")
                         .WithMany()
                         .HasForeignKey("LeaderId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Leader");

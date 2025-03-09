@@ -4,9 +4,6 @@
 @inject IUnitOfWork UnitOfWork
 @attribute [Authorize(Roles = AppConsts.UserConsts.AdminRole)]
 
-<PageTitle>Users</PageTitle>
-
-
 <MudTable ServerData="ServerReload" Dense="true" Hover="true" Bordered="false" @ref=table>
     <ToolBarContent>
         <MudText Typo="Typo.h6">Users</MudText>
@@ -83,9 +80,11 @@
                 Items = pagedData
             };
     }
-    private Task OpenDialogAsync(DialogOptions options)
+    private async Task OpenDialogAsync(DialogOptions options)
     {
-        return Dialog.ShowAsync<CreateUserDialog>("", options);
+        await Dialog.ShowAsync<CreateUserDialog>("", options);
+        StateHasChanged();
+        await table.ReloadServerData();
     }
     private async void OnSearch(string text)
     {

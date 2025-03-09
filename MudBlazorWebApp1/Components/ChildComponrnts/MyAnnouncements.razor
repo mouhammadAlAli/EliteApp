@@ -1,4 +1,6 @@
-﻿<MudCard Outlined="true">
+﻿@inject ApplicationDbContext ApplicationContext
+
+<MudCard Outlined="true">
     <MudCardHeader>
         <CardHeaderContent>
             <MudGrid Justify="Justify.FlexStart">
@@ -13,6 +15,10 @@
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
+        @if (announcements == null || !announcements.Any()){
+            <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+
+        }else{
             <MudStack>
                 <MudGrid>
                     <MudItem>
@@ -34,8 +40,16 @@
                     </MudItem>
                 </MudGrid>
             </MudStack>
-        <MudSpacer />
+            <MudSpacer />
+        }
     </MudCardContent>
 </MudCard>
 @code {
+    private List<Announcement> announcements { get; set; }
+    [Parameter]
+    public int? UserId { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        announcements = await ApplicationContext.Announcements.ToListAsync();
+    }
 }

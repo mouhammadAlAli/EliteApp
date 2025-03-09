@@ -16,5 +16,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     }
     public virtual DbSet<UserWorkingPeriod> UserWorkingPeriods { get; set; }
     public virtual DbSet<Attachment> Attachments { get; set; }
+    public DbSet<Team> Teams { get; set; }
+    public DbSet<Announcement> Announcements { get; set; }
 }
 

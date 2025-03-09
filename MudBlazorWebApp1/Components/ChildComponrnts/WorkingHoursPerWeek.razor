@@ -1,5 +1,6 @@
 ﻿@* @inject ApplicationDbContext _context *@
 @* @inject ICurrentUserService CurrentUserService; *@
+@inject NavigationManager NavManager
 
 <MudGrid Justify="Justify.SpaceBetween" Class="mt-1">
     <MudItem>
@@ -15,7 +16,7 @@
         </MudGrid>
     </MudItem>
     <MudItem>
-        <MudButton Variant="Variant.Outlined" Color="Color.Primary" >My Time Sheet</MudButton>
+        <MudButton OnClick="GoToTimeSheet" Variant="Variant.Outlined" Color="Color.Primary" >My Time Sheet</MudButton>
     </MudItem>
 </MudGrid>
 
@@ -39,4 +40,7 @@
     //             WeekWorkingHours += period.To.Value - period.From;
     //     }
     // }
+    private void GoToTimeSheet(){
+        NavManager.NavigateTo("/TimeSheet");
+    }
 }

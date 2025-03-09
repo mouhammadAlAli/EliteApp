@@ -11,7 +11,8 @@
                  <MudNavLink Href="/Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.VerifiedUser">Users</MudNavLink>
                  <MudNavLink Href="/Roles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisedUserCircle">Roles</MudNavLink>
             </MudNavGroup>
-           
+            <MudNavLink Href="/Teams" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Group">Teams</MudNavLink>
+            <MudNavLink Href="/Announcements" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Campaign">Announcements</MudNavLink>
             <form action="Account/Logout" method="post">
                 <AntiforgeryToken />
                 <input type="hidden" name="ReturnUrl" value="@currentUrl" />

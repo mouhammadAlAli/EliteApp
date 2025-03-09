@@ -10,8 +10,8 @@
                 @bind-Value="model.Name" For="@(() => model.Name)" />
                 <MudCardActions>
                     <MudSpacer />
-                    <MudButton OnClick="Cancel" Class="ml-auto">Cancel</MudButton>
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+                    <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml5 mt-5">Add</MudButton>
                 </MudCardActions>
             </MudCard>
             @if (!string.IsNullOrEmpty(error))
@@ -46,4 +46,5 @@
         await RoleManager.CreateAsync(role);
         MudDialog.Close(DialogResult.Ok(true));
     }
+
 }
