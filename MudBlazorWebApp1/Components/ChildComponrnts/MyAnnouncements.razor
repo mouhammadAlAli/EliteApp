@@ -1,6 +1,4 @@
-﻿@inject ApplicationDbContext ApplicationContext
-
-<MudCard Outlined="true">
+﻿<MudCard Outlined="true">
     <MudCardHeader>
         <CardHeaderContent>
             <MudGrid Justify="Justify.FlexStart">
@@ -15,41 +13,34 @@
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
-        @if (announcements == null || !announcements.Any()){
+        @if (Announcements == null || !Announcements.Any())
+        {
             <MudProgressCircular Color="Color.Default" Indeterminate="true" />
 
         }else{
-            <MudStack>
-                <MudGrid>
-                    <MudItem>
-                        <MudIcon Color="Color.Primary" Icon="@Icons.Material.Outlined.School" />
-                    </MudItem>
-                    <MudItem>
-                        <MudText Typo="Typo.body1">Training</MudText>
-                        <MudText Typo="Typo.body2">3 Active Traininig, 4 past due or expired</MudText>
-                    </MudItem>
-                </MudGrid>
-                <MudDivider />
-                <MudGrid>
-                    <MudItem>
-                        <MudIcon Color="Color.Primary" Icon="@Icons.Material.Outlined.AttachMoney" />
-                    </MudItem>
-                    <MudItem>
-                        <MudText Typo="Typo.body1">Benifits</MudText>
-                        <MudText Typo="Typo.body2">enrolled in 4 benifit palns</MudText>
-                    </MudItem>
-                </MudGrid>
-            </MudStack>
+            <MudPaper Style="max-height: 300px; overflow-y: auto;">
+                <MudStack>
+                    @foreach (var announcement in Announcements)
+                    {
+                        <MudGrid>
+                            <MudItem>
+                                <MudIcon Color="Color.Primary" Icon="@Icons.Material.Outlined.School" />
+                            </MudItem>
+                            <MudItem>
+                                <MudText Typo="Typo.body1">@announcement.Title</MudText>
+                                <MudText Typo="Typo.body2">@announcement.Description</MudText>
+                            </MudItem>
+                        </MudGrid>
+                        <MudDivider />
+                    }
+                </MudStack>
+            </MudPaper>
             <MudSpacer />
         }
     </MudCardContent>
 </MudCard>
 @code {
-    private List<Announcement> announcements { get; set; }
     [Parameter]
-    public int? UserId { get; set; }
-    protected override async Task OnInitializedAsync()
-    {
-        announcements = await ApplicationContext.Announcements.ToListAsync();
-    }
+    public List<Announcement> Announcements { get; set; }
+
 }

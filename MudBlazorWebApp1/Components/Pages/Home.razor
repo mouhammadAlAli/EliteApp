@@ -1,6 +1,8 @@
 ﻿@page "/"
 @attribute [Authorize]
-@inject AuthenticationStateProvider AuthProvider
+@inject ICurrentUserService CurrentUser
+@inject ApplicationDbContext _context
+
 
 <PageTitle>Home</PageTitle>
 
@@ -8,16 +10,23 @@
     <MudGrid>
         <MudItem xs="12" sm="6" md="4">
             <MudCard>
-                <MudCardHeader>
-                    <CardHeaderAvatar>
-                        <MudAvatar Color="Color.Secondary">@context.User.Identity?.Name?.First()</MudAvatar>
-                    </CardHeaderAvatar>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.body1">Hello, @context.User.Identity?.Name</MudText>
-                        <MudText Typo="Typo.body2">Role</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-             </MudCard>
+                @if (User == null || string.IsNullOrEmpty(User.Email))
+                {
+                    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+                }
+                else
+                {
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Secondary">@User.FirstName.First()</MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.body1">Hello, @User.FirstName @User.LastName</MudText>
+                            <MudText Typo="Typo.body2">Role</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                }
+            </MudCard>
         </MudItem>
         <MudItem xs="12" sm="6" md="4">
         </MudItem>
@@ -25,7 +34,7 @@
         <MudItem xs="12" sm="6">
             <MudGrid>
                 <MudItem xs="12">
-                    <MyTime/>
+                    <MyTime CurrentWorkingPeriod="@CurrentWorkingPeriod" UserId="@User.Id" PeriodsThisWeek="@UserWorkingPeriodsThisWeek" />
                 </MudItem>
                 <MudItem xs="12">
                     <TimeOff/>
@@ -35,10 +44,10 @@
                 </MudItem>
             </MudGrid>
         </MudItem>
-         @* right side *@
+        @* right side *@
         <MudItem xs="12" sm="6">
             <MudPaper Elevation="2" Style="height: 100%">
-                <MyAnnouncements />
+                <MyAnnouncements  Announcements="@Announcements"/>
             </MudPaper>
         </MudItem>
         <MudItem xs="12" sm="6" md="4">
@@ -59,14 +68,31 @@
     </MudGrid>
 </MudContainer>
 
-
-
-
 @code{
-    public AuthenticationState context { get; set; }
-    
-    protected override async void OnInitialized()
+    private User User { get; set; } = new(); 
+    private UserWorkingPeriod? CurrentWorkingPeriod { get; set; } = new();
+    private List<UserWorkingPeriod> UserWorkingPeriodsThisWeek { get; set; } = new();
+    private List<Announcement> Announcements { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        context = await AuthProvider.GetAuthenticationStateAsync();
+        User = await CurrentUser.GetCurrentUserAsync();
+        var today = DateTime.UtcNow.Date;
+        var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+        var endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);
+
+        UserWorkingPeriodsThisWeek = await _context.UserWorkingPeriods
+            .Where(wp => wp.Date >= startOfWeek && wp.Date <= endOfWeek && wp.UserId == User.Id)
+            .OrderBy(wp => wp.Date)
+            .ToListAsync();
+        CurrentWorkingPeriod = await _context.UserWorkingPeriods
+             .Where(wp => wp.UserId == User.Id)
+             .OrderByDescending(wp => wp.Id)
+             .FirstOrDefaultAsync();
+
+        if (User.TeamId.HasValue)
+            Announcements = await _context.Announcements.Where(a => a.TeamId == User.TeamId || a.TeamId ==null).ToListAsync();
+        else
+            Announcements = await _context.Announcements.Where(x => x.TeamId == null).ToListAsync();
     }
 }

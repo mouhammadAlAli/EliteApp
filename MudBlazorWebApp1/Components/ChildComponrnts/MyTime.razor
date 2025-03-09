@@ -1,6 +1,5 @@
 ﻿@inject IDialogService DialogService
 @inject ApplicationDbContext _context
-@inject ICurrentUserService CurrentUserService;
 
 <MudCard Square="true" Outlined="true">
     <MudCardHeader>
@@ -19,11 +18,7 @@
     <MudCardContent>
         @if (IsLoading)
         {
-            <MudGrid Justify="Justify.Center">
-                <MudItem>
-                    <MudProgressCircular Color="Color.Default" Indeterminate="true" />
-                </MudItem>
-            </MudGrid>
+            <MudProgressCircular Color="Color.Default" Indeterminate="true" />
         }else{
             <MudGrid Justify="Justify.Center">
                 <MudItem>
@@ -61,10 +56,15 @@
     </MudCardContent>
 </MudCard>
 @code {
-    private UserWorkingPeriod? CurrentWorkingPeriod;
+    [Parameter]
+    public UserWorkingPeriod CurrentWorkingPeriod { get; set; }
+    [Parameter]
+    public List<UserWorkingPeriod> PeriodsThisWeek { get; set; }
+    [Parameter]
+    public int UserId { get; set; }
+
     private DateTime? ClockedInTime;
     private DateTime? ClockedOutTime;
-    private int UserId;
     private bool IsClockedIn;
     private TimeSpan WorkingHoursAllDay;
     private TimeSpan WeekWorkingHours;
@@ -82,61 +82,50 @@
     private bool IsLoading = true;
     protected override async Task OnInitializedAsync()
     {
-        IsLoading = true;
         try
         {
-            UserId = await CurrentUserService.GetCurrentUserIdAsync();
-            CurrentWorkingPeriod = await _context.UserWorkingPeriods
-                .Where(x => x.UserId == UserId)
-                .OrderByDescending(x => x.Id)
-                .FirstOrDefaultAsync();
-
-            var today = DateTime.UtcNow.Date;
-            var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
-            var endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);
-
-            var periodsThisWeek = await _context.UserWorkingPeriods
-                .Where(wp => wp.Date >= startOfWeek && wp.Date <= endOfWeek && wp.UserId == UserId)
-                .OrderBy(wp => wp.Date)
-                .ToListAsync();
-
             WeekWorkingHours = TimeSpan.Zero;
-            foreach (var period in periodsThisWeek)
-            {
-                if (period.To.HasValue)
-                    WeekWorkingHours += period.To.Value - period.From;
-            }
-
             WorkingHoursAllDay = TimeSpan.Zero;
-            foreach (var period in periodsThisWeek.Where(x => x.Date.Date == today))
-            {
-                if (period.To.HasValue)
-                    WorkingHoursAllDay += period.To.Value - period.From;
-            }
-
+            var today = DateTime.UtcNow.Date;
             if (CurrentWorkingPeriod == null)
-                IsClockedIn = false;
-            else
             {
-                if (!CurrentWorkingPeriod.To.HasValue)
+                IsClockedIn = false;
+            }
+            else if (!CurrentWorkingPeriod.To.HasValue)
+            {
+                IsClockedIn = true;
+                ClockedInTime = CurrentWorkingPeriod.From;
+
+                if (ClockedInTime.HasValue)
                 {
-                    IsClockedIn = true;
-                    ClockedInTime = CurrentWorkingPeriod.From;
                     ElapsedTime = DateTime.UtcNow - ClockedInTime.Value;
                     StartTimer();
                 }
-                else
+            }
+            else
+            {
+                IsClockedIn = false;
+                ClockedOutTime = CurrentWorkingPeriod.To;
+                ClockedInTime = CurrentWorkingPeriod.From;
+            }
+            if(PeriodsThisWeek != null)
+            {
+                foreach (var period in PeriodsThisWeek)
                 {
-                    IsClockedIn = false;
-                    ClockedOutTime = CurrentWorkingPeriod.To;
-                    ClockedInTime = CurrentWorkingPeriod.From;
+                    if (period.To.HasValue)
+                    {
+                        var duration = period.To.Value - period.From;
+                        WeekWorkingHours += duration;
+
+                        if (period.Date.Date == today)
+                            WorkingHoursAllDay += duration;
+                    }
                 }
             }
         }
         finally
         {
-            IsLoading = false; 
-            StateHasChanged();
+            IsLoading = false;
         }
     }
 
@@ -176,6 +165,7 @@
         }
         StateHasChanged();
     }
+
     private void StartTimer()
     {
         _timer?.Dispose(); 
@@ -194,6 +184,7 @@
         _timer?.Dispose();
         _timer = null;
     }
+
     private async Task OpenDialogAsync()
     {
         try
@@ -215,7 +206,6 @@
 
             var dialog = await DialogService.ShowAsync<AddTimeEntryDialog>("Enter Time", parameters, options);
 
-            // Await the result of the dialog
             var result = await dialog.Result;
         }
         catch (Exception ex)
