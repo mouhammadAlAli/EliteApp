@@ -23,23 +23,6 @@
 @code {
     [Parameter]
     public TimeSpan WeekWorkingHours { get; set; } = TimeSpan.Zero;
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     var userId = await CurrentUserService.GetCurrentUserIdAsync();
-    //     var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek); 
-    //     var endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);
-
-    //     var periodsThisWeek = await _context.UserWorkingPeriods
-    //         .Where(wp => wp.Date >= startOfWeek && wp.Date <= endOfWeek && wp.UserId == userId)
-    //         .OrderBy(wp => wp.Date)
-    //         .ToListAsync();
-    //     WeekWorkingHours = TimeSpan.Zero;
-    //     foreach (var period in periodsThisWeek)
-    //     {
-    //         if (period.To.HasValue)
-    //             WeekWorkingHours += period.To.Value - period.From;
-    //     }
-    // }
     private void GoToTimeSheet(){
         NavManager.NavigateTo("/TimeSheet");
     }

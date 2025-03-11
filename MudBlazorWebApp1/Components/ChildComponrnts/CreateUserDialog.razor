@@ -13,7 +13,6 @@
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
             <MudCard>
-                <MudCardHeader>Create New User</MudCardHeader>
                 <MudTextField Label="First name" Class="mt-3"
                 @bind-Value="model.FirstName" For="@(() => model.FirstName)" />
                 <MudTextField Label="Last name" Class="mt-3"
@@ -26,6 +25,12 @@
                         <MudSelectItem T="Role" Value="@role">@role.Name</MudSelectItem>
                     }
                 </MudSelect>
+                <MudFileUpload T="IBrowserFile" >
+                    <ActivatorContent>
+                        <MudFab Color="Color.Success"
+                                StartIcon="@Icons.Material.Filled.AttachFile" />
+                    </ActivatorContent>
+                </MudFileUpload>
                 <MudCardActions>
                     <MudSpacer />
                     <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
@@ -52,16 +57,33 @@
 @code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public User? User { get; set; }
+    private bool IsEditMode => User != null;
     private void Cancel() => MudDialog.Cancel();
     RegisterAccountForm model = new RegisterAccountForm();
     private IEnumerable<IdentityError>? identityErrors;
     private List<Role> _roles = new();
+    private Role? LastRole { get; set; } = null;
     bool success;
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
     protected override async Task OnInitializedAsync()
     {
         _roles = await RoleManager.Roles.ToListAsync();
+
+        if(User!=null)
+        {
+            var userRoles = await UserManager.GetRolesAsync(User);
+            if(userRoles.Any()){
+                var role = await RoleManager.FindByNameAsync(userRoles.First());
+                model.Role = role;
+                LastRole = role;
+            }
+            model.Email = User.Email;
+            model.FirstName = User.FirstName;
+            model.LastName = User.LastName;
+            
+        }
     }
     public class RegisterAccountForm
     {
@@ -81,31 +103,45 @@
 
     private async Task OnValidSubmit(EditContext context)
     {
-        success = true;
-        var user = new User
-            {
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Email = model.Email,
-                UserName = model.Email
-            };
-        var result = await UserManager.CreateAsync(user, "123456");
-
-        if (!result.Succeeded)
+        if (IsEditMode)
         {
-            identityErrors = result.Errors;
-            return;
-        }
-        var createdUser = await UserManager.FindByEmailAsync(model.Email);
-        await UserManager.AddToRoleAsync(createdUser, model.Role.Name);
-        // var userId = await UserManager.GetUserIdAsync(user);
-        // var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-        // code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-        // var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-        //     NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-        //     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+            //if UserEmail != model.Email Send Confirmation 
+            User.Email = model.Email;
+            User.FirstName = model.FirstName;
+            User.LastName = model.LastName;
+            if(LastRole != null)
+                await UserManager.RemoveFromRoleAsync(User, LastRole.Name);
+            await UserManager.AddToRoleAsync(User, model.Role.Name);
 
-        // await EmailSender.SendConfirmationLinkAsync(user, model.Email, HtmlEncoder.Default.Encode(callbackUrl));
+        }else
+        {
+            var user = new User
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    UserName = model.Email
+                };
+            var result = await UserManager.CreateAsync(user, "123456");
+
+            if (!result.Succeeded)
+            {
+                identityErrors = result.Errors;
+                return;
+            }
+            var createdUser = await UserManager.FindByEmailAsync(model.Email);
+            await UserManager.AddToRoleAsync(createdUser, model.Role.Name);
+            // var userId = await UserManager.GetUserIdAsync(user);
+            // var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+            // code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            // var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+            //     NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+            //     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+
+            // await EmailSender.SendConfirmationLinkAsync(user, model.Email, HtmlEncoder.Default.Encode(callbackUrl));
+        }
+        success = true;
+       
         MudDialog.Close(DialogResult.Ok(true));
 
     }

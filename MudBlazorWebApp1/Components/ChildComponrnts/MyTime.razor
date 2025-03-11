@@ -1,7 +1,7 @@
 ﻿@inject IDialogService DialogService
 @inject ApplicationDbContext _context
 
-<MudCard Square="true" Outlined="true">
+<MudCard Square="true" Outlined="true" Style="height: 100%">
     <MudCardHeader>
         <CardHeaderContent>
             <MudGrid Justify="Justify.FlexStart">
@@ -80,7 +80,7 @@
     private string StartIcon => IsClockedIn ? Icons.Material.Outlined.Stop : Icons.Material.Outlined.Timer;
     private string LastClock => IsClockedIn ? $"Clocked In: {ClockedInTime.Humanize()}" : $"Clocked Out: {ClockedOutTime.Humanize()}";
     private bool IsLoading = true;
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         try
         {

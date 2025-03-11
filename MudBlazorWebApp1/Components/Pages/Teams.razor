@@ -10,14 +10,13 @@
         <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         <MudSpacer />
-        <MudFab OnClick="OpenDialogAsync" Label="New Team" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
+        <MudFab OnClick="@(() => OpenDialogAsync())" Label="New Team" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
     </ToolBarContent>
     <HeaderContent>
         <MudTh>Id</MudTh>
         <MudTh>Name</MudTh>
         <MudTh>Leader Name</MudTh>
         <MudTh>Members Count</MudTh>
-        <MudTh>IsActive</MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
@@ -25,12 +24,9 @@
         <MudTd DataLabel="Name">@context.Name</MudTd>
         <MudTd DataLabel="Leader Name">@context.Leader.FirstName @context.Leader.LastName</MudTd>
         <MudTd DataLabel="Members Count">@context.Members.Count() </MudTd>
-        <MudTd DataLabel="IsActive">
-            <MudSwitch @bind-value="context.IsActive" Color="Color.Success" UncheckedColor="Color.Error" />
-        </MudTd>
         <MudTd DataLabel="Actions">
             <MudToolBar>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
+                <MudIconButton OnClick="@(() => OpenDialogAsync(context))" Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
             </MudToolBar>
         </MudTd>
     </RowTemplate>
@@ -85,7 +81,7 @@
             await table.ReloadServerData();
         }
     }
-    private async Task OpenDialogAsync()
+    private async Task OpenDialogAsync(Team? team = null)
     {
         try
         {
@@ -96,10 +92,13 @@
                     CloseButton = true,
                     BackdropClick = false
                 };
+            var parameters = new DialogParameters { ["Team"] = team };
 
-            var dialog = await DialogService.ShowAsync<CreateTeamDialog>("Create New Team", options);
+            var dialog = await DialogService.ShowAsync<CreateTeamDialog>( team == null ?"Create New Team" : "Edit Team", options: options, parameters:parameters);
 
             var result = await dialog.Result;
+            await table.ReloadServerData();
+            StateHasChanged();
         }
         catch (Exception ex)
         {

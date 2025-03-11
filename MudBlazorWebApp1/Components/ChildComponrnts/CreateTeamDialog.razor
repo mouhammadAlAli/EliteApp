@@ -9,25 +9,33 @@
     <DialogContent>
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
-            <MudCard>
-                <MudTextField Label="Name" Class="mt-3"
-                @bind-Value="model.Name" For="@(() => model.Name)" Required="true" RequiredError="Required" />
-                <MudTextField Label="Description" Class="mt-3"
-                @bind-Value="model.Description" For="@(() => model.Description)" Required="true" RequiredError="Required" />
-                <MudTextField Label="Leader Email" Class="mt-3"
-                @bind-Value="model.LeaderEmail" For="@(() => model.LeaderEmail)" Required="true" RequiredError= "Required"/>
-                <MudSelect Class="mt-4" T="User" MultiSelection="true" HelperText=""  @bind-SelectedValues="selectedUsers" MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))" Label="Members" AdornmentIcon="@Icons.Material.Filled.Search">
-                    @foreach (var user in users)
-                    {
-                        <MudSelectItem T="User" Value="@user">@user</MudSelectItem>
-                    }
-                </MudSelect>
-                <MudCardActions>
-                    <MudSpacer />
-                    <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Add</MudButton>
-                </MudCardActions>
-            </MudCard>
+            @if(!users.Any()){
+                <MudText Typo="Typo.h5">All users joined to team</MudText>
+            }else{
+                <MudCard>
+                    <MudTextField Label="Name" Class="mt-3"
+                    @bind-Value="model.Name" For="@(() => model.Name)" Required="true" RequiredError="Required" />
+                    <MudTextField Label="Description" Class="mt-3"
+                    @bind-Value="model.Description" For="@(() => model.Description)" Required="true" RequiredError="Required" />
+                    <MudSelect Class="mt-4" T="User" MultiSelection="false" HelperText="" @bind-Value="Leader" Label="Leader" AdornmentIcon="@Icons.Material.Filled.Search" Required="true" RequiredError="Please select team leader">
+                        @foreach (var user in users)
+                        {
+                            <MudSelectItem T="User" Value="@user">@($"{user.FirstName} {user.LastName}")</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudSelect Class="mt-4" T="User" MultiSelection="true" HelperText="" @bind-SelectedValues="selectedUsers" MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))" Label="Members" AdornmentIcon="@Icons.Material.Filled.Search">
+                        @foreach (var user in users)
+                        {
+                            <MudSelectItem T="User" Value="@user">@($"{user.FirstName} {user.LastName}")</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudCardActions>
+                        <MudSpacer />
+                        <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Add</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            }
         </EditForm>
     </DialogContent>
 </MudDialog>
@@ -35,8 +43,13 @@
 @code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
+    [Parameter]
+    public Team? Team { get; set; }
+    private bool IsEditMode => Team != null;
+
     private void Cancel() => MudDialog.Cancel();
     CreateTeam model = new CreateTeam();
+    public User Leader { get; set; }
     private string value { get; set; } = "Nothing selected";
     private IEnumerable<User> selectedUsers = new List<User>();
     private IEnumerable<User> users { get; set; } = new List<User>();
@@ -45,6 +58,14 @@
     protected override async Task OnInitializedAsync()
     {
         users = await UserManager.Users.Where(user => !user.TeamId.HasValue).ToListAsync();
+        if(IsEditMode)
+        {
+            model.Name = Team.Name;
+            model.Description = Team.Description;
+            users = users.Concat(Team.Members).ToList();
+            Leader = Team.Leader;
+            selectedUsers = Team.Members;
+        }
     }
     public class CreateTeam
     {
@@ -53,8 +74,6 @@
 
         [Required]
         public string Description { get; set; }
-        [Required]
-        public string LeaderEmail { get; set; }
     }
 
     private string GetMultiSelectionText(List<string> selectedValues)
@@ -63,25 +82,28 @@
     }
     private async Task OnValidSubmit(EditContext context)
     {
-        success = true;
+        if(IsEditMode)
+        {
+            Team.Name = model.Name;
+            Team.Description = model.Description;
+            Team.LeaderId = Leader.Id;
+            Team.Members = selectedUsers.ToList();
+            Team.Members.Add(Leader);
+            ApplicationContext.Update(Team);
+        }else
+        {
+            success = true;
+            var team = new Team
+                {
+                    Name = model.Name,
+                    Description = model.Description,
+                    Members = selectedUsers.ToList(),
+                };
+            team.LeaderId = Leader.Id;
+            team.Members.Add(Leader);
 
-        var leader = await UserManager.FindByEmailAsync(model.LeaderEmail);
-        if (leader == null)
-            return;
-        if (leader.TeamId.HasValue)
-            return;
-        var team = new Team
-            {
-                Name = model.Name,
-                Description = model.Description,
-                LeaderId = leader.Id,
-                Members = selectedUsers.ToList(),
-                IsActive = true
-            };
-        team.LeaderId = leader.Id;
-        team.Members.Add(leader);
-
-        await ApplicationContext.AddAsync(team);
+            await ApplicationContext.AddAsync(team);
+        }
         await ApplicationContext.SaveChangesAsync();
         MudDialog.Close(DialogResult.Ok(true));
     }

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MudBlazorWebApp1.Data.Entities;
 
-public class Team : BaseEntity, IActiveEntity
+public class Team : BaseEntity
 {
     public Team()
     {
@@ -12,7 +12,6 @@ public class Team : BaseEntity, IActiveEntity
     }
     public string Name { get; set; }
     public string Description { get; set; }
-    public bool IsActive { get; set; }
     public int LeaderId { get; set; }
     [ForeignKey(nameof(LeaderId))]
     public virtual User Leader { get; set; }

@@ -4,6 +4,8 @@
 @inject IUnitOfWork UnitOfWork
 @attribute [Authorize(Roles = AppConsts.UserConsts.AdminRole)]
 
+<PageTitle>Users</PageTitle>
+
 <MudTable ServerData="ServerReload" Dense="true" Hover="true" Bordered="false" @ref=table>
     <ToolBarContent>
         <MudText Typo="Typo.h6">Users</MudText>
@@ -11,7 +13,7 @@
         <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
         AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         <MudSpacer />
-        <MudFab OnClick="@(() => OpenDialogAsync(_backdropClick))" Label="New User" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
+        <MudFab OnClick="@(() => OpenDialogAsync())" Label="New User" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
     </ToolBarContent>
     <HeaderContent>
         <MudTh>Id</MudTh>
@@ -27,11 +29,12 @@
         <MudTd DataLabel="Last Name">@context.LastName</MudTd>
         <MudTd DataLabel="Email">@context.Email</MudTd>
         <MudTd DataLabel="IsActive">
-            <MudSwitch @bind-value="context.IsActive" Color="Color.Success" UncheckedColor="Color.Error" />
+            <MudSwitch T="bool" Value="@context.IsActive" Color="Color.Success" UncheckedColor="Color.Error"
+                       ValueChanged="@(async value => await SwitchActivation(context, value))" />
         </MudTd>
         <MudTd DataLabel="Actions">
             <MudToolBar>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
+                <MudIconButton OnClick="@(() => OpenDialogAsync(context))" Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
             </MudToolBar>
         </MudTd>
     </RowTemplate>
@@ -52,8 +55,6 @@
 @code {
     private string searchString = "";
     private MudTable<User> table;
-    private readonly DialogOptions _backdropClick = new() { BackdropClick = false ,FullWidth = true };
-
     private async Task<TableData<User>> ServerReload(TableState state, CancellationToken token)
     {
         var usersQuery = UserManager.Users.AsQueryable();
@@ -80,12 +81,14 @@
                 Items = pagedData
             };
     }
-    private async Task OpenDialogAsync(DialogOptions options)
+
+    private async Task OpenDialogAsync(User? User = null)
     {
-        await Dialog.ShowAsync<CreateUserDialog>("", options);
-        StateHasChanged();
-        await table.ReloadServerData();
+        DialogOptions _backdropClick = new() { BackdropClick = false, FullWidth = true };
+        var parameters = new DialogParameters { ["User"] = User };
+        await Dialog.ShowAsync<CreateUserDialog>(User == null ? "New User" : "Edit User", options: _backdropClick, parameters: parameters);
     }
+
     private async void OnSearch(string text)
     {
         if(!string.IsNullOrEmpty(text)){
@@ -93,15 +96,16 @@
             await table.ReloadServerData();
         }
     }
-    private async Task SwitchActivation(int id)
+    private async Task SwitchActivation(User user,bool IsActive)
     {
-        var user = await UserManager.FindByIdAsync(id.ToString());
-
         if (user != null)
         {
-            user.IsActive = !user.IsActive; 
+            user.IsActive = IsActive;
             await UserManager.UpdateAsync(user);
             await UnitOfWork.SaveChangesAsync();
+
+            await table.ReloadServerData();
+            StateHasChanged();
         }
     }
 }

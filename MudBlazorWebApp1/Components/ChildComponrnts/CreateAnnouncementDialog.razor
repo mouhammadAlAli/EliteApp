@@ -1,15 +1,18 @@
 ﻿@inject ApplicationDbContext ApplicationContext
 
+@inject ApplicationDbContext ApplicationContext
+
 <MudDialog>
     <DialogContent>
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
             <MudCard>
-                <MudTextField Label="Name" Class="mt-3"
-                @bind-Value="model.Title" For="@(() => model.Title)" Required="true" RequiredError="Required" />
+                <MudTextField Label="Title" Class="mt-3"
+                              @bind-Value="model.Title" For="@(() => model.Title)" Required="true" RequiredError="Required" />
                 <MudTextField Label="Description" Class="mt-3"
-                @bind-Value="model.Description" For="@(() => model.Description)" Required="true" RequiredError="Required" />
+                              @bind-Value="model.Description" For="@(() => model.Description)" Required="true" RequiredError="Required" />
                 <MudSwitch Class="mt-5" @bind-Value="ForAll" Color="Color.Primary" UncheckedColor="Color.Secondary">@switchStr</MudSwitch>
+
                 @if (!ForAll)
                 {
                     <MudSelect T="Team" MultiSelection="false" @bind-Value="selectedTeam" HelperText="" Label="Team" AdornmentIcon="@Icons.Material.Filled.Search">
@@ -22,7 +25,9 @@
                 <MudCardActions>
                     <MudSpacer />
                     <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Publish</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">
+                        @(isEditMode ? "Update" : "Publish")
+                    </MudButton>
                 </MudCardActions>
             </MudCard>
         </EditForm>
@@ -30,40 +35,66 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
-    private void Cancel() => MudDialog.Cancel();
-    CreateAnnouncement model = new CreateAnnouncement();
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public Announcement? SelectedAnnouncement { get; set; }
+
+    private bool isEditMode => SelectedAnnouncement != null;
     private bool ForAll = true;
     private Team? selectedTeam = null;
     private string switchStr => ForAll ? "For All Teams" : "For one Team";
 
     private IEnumerable<Team> Teams { get; set; } = new List<Team>();
-    bool success;
+    private bool success;
+    private CreateAnnouncement model = new CreateAnnouncement();
 
     protected override async Task OnInitializedAsync()
     {
         Teams = await ApplicationContext.Teams.ToListAsync();
+
+        if (isEditMode)
+        {
+            // Populate the form with existing data
+            model.Title = SelectedAnnouncement.Title;
+            model.Description = SelectedAnnouncement.Description;
+            selectedTeam = SelectedAnnouncement.Team;
+            ForAll = selectedTeam == null;
+        }
     }
+
+    private void Cancel() => MudDialog.Cancel();
+
     public class CreateAnnouncement
     {
-        [Required]
-        public string Title { get; set; }
-
-        [Required]
-        public string Description { get; set; }
+        [Required] public string Title { get; set; }
+        [Required] public string Description { get; set; }
     }
 
     private async Task OnValidSubmit(EditContext context)
     {
         success = true;
-        var announcement = new Announcement
+
+        if (isEditMode)
         {
-            Title = model.Title,
-            Description = model.Description,
-            TeamId = selectedTeam?.Id
-        };
-        await ApplicationContext.AddAsync(announcement);
+            // Update existing announcement
+            SelectedAnnouncement.Title = model.Title;
+            SelectedAnnouncement.Description = model.Description;
+            SelectedAnnouncement.TeamId = selectedTeam?.Id;
+
+            ApplicationContext.Update(SelectedAnnouncement);
+        }
+        else
+        {
+            var announcement = new Announcement
+                {
+                    Title = model.Title,
+                    Description = model.Description,
+                    TeamId = selectedTeam?.Id
+                };
+
+            await ApplicationContext.AddAsync(announcement);
+        }
+
         await ApplicationContext.SaveChangesAsync();
         MudDialog.Close(DialogResult.Ok(true));
     }

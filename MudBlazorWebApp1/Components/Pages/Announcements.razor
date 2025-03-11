@@ -10,7 +10,8 @@
         <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         <MudSpacer />
-        <MudFab OnClick="@(() => OpenDialogAsync())" Label="New Announcement" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
+        <MudFab OnClick="@(() => OpenDialogAsync(null))" Label="New Announcement" Color="Color.Primary"
+                StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
     </ToolBarContent>
     <HeaderContent>
         <MudTh>Id</MudTh>
@@ -22,11 +23,11 @@
     <RowTemplate>
         <MudTd DataLabel="Id">@context.Id</MudTd>
         <MudTd DataLabel="Title">@context.Title</MudTd>
-        <MudTd DataLabel="Description">@context.Title</MudTd>
-        <MudTd DataLabel="Team">@(context.Team != null ? context.Team.Name :  "All")</MudTd>
+        <MudTd DataLabel="Description">@context.Description</MudTd>
+        <MudTd DataLabel="Team">@(context.Team != null ? context.Team.Name : "All")</MudTd>
         <MudTd DataLabel="Actions">
             <MudToolBar>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" OnClick="() => OpenDialogAsync(context)" />
             </MudToolBar>
         </MudTd>
     </RowTemplate>
@@ -41,13 +42,10 @@
     </PagerContent>
 </MudTable>
 
-
-
-
 @code {
     private string searchString = "";
-    public bool Basic_Switch1 { get; set; } = false;
     private MudTable<Announcement> table;
+
     private async Task<TableData<Announcement>> ServerReload(TableState state, CancellationToken token)
     {
         var query = ApplicationDbContext.Announcements.AsQueryable();
@@ -62,7 +60,6 @@
 
         var totalItems = await query.CountAsync();
 
-        // Apply pagination: skip rows for the current page and take the page size
         var pagedData = await query
                                 .Skip(state.Page * state.PageSize)
                                 .Take(state.PageSize)
@@ -74,6 +71,7 @@
                 Items = pagedData
             };
     }
+
     private async void OnSearch(string text)
     {
         if (!string.IsNullOrEmpty(text))
@@ -82,8 +80,14 @@
             await table.ReloadServerData();
         }
     }
-    private async Task OpenDialogAsync()
+
+    private async Task OpenDialogAsync(Announcement? announcement)
     {
+        var parameters = new DialogParameters
+        {
+            { "SelectedAnnouncement", announcement }
+        };
+
         var options = new DialogOptions
             {
                 CloseOnEscapeKey = true,
@@ -91,8 +95,11 @@
                 CloseButton = true,
                 BackdropClick = false
             };
-        await Dialog.ShowAsync<CreateAnnouncementDialog>("New Announcement", options);
-        StateHasChanged();
+
+        var result = await Dialog.ShowAsync<CreateAnnouncementDialog>("New Announcement", parameters, options);
+
         await table.ReloadServerData();
+
+        StateHasChanged();
     }
 }

@@ -1,7 +1,10 @@
 ﻿@page "/Roles"
 @inject RoleManager<Role> RoleManager
 @inject IDialogService Dialog
+@inject IUnitOfWork UnitOfWork
 @attribute [Authorize(Roles = AppConsts.UserConsts.AdminRole)]
+
+<PageTitle>Roles</PageTitle>
 
 <MudTable ServerData="ServerReload" Dense="true" Hover="true" Bordered="false" @ref=table>
     <ToolBarContent>
@@ -10,20 +13,24 @@
         <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         <MudSpacer />
-        <MudFab OnClick="@(() => OpenDialogAsync(_backdropClick))" Label="New Role" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
+        <MudFab OnClick="@(() => OpenDialogAsync())" Label="New Role" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
     </ToolBarContent>
     <HeaderContent>
         <MudTh>Id</MudTh>
         <MudTh>Name</MudTh>
+        <MudTh>IsActive</MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Id">@context.Id</MudTd>
         <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="IsActive">
+            <MudSwitch T="bool" Value="@context.IsActive" Color="Color.Success" UncheckedColor="Color.Error"
+                       ValueChanged="@(async value => await SwitchActivation(context, value))" />
+        </MudTd>
         <MudTd DataLabel="Actions">
             <MudToolBar>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
-                <MudSwitch id="@context.Id" @bind-Value="Basic_Switch1" Color="Color.Success" UncheckedColor="Color.Error" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" OnClick="@(() => OpenDialogAsync(context))" />
             </MudToolBar>
         </MudTd>
     </RowTemplate>
@@ -43,9 +50,7 @@
 
 @code {
     private string searchString = "";
-    public bool Basic_Switch1 { get; set; } = false;
     private MudTable<Role> table;
-    private readonly DialogOptions _backdropClick = new() { BackdropClick = false, FullWidth = true };
     private async Task<TableData<Role>> ServerReload(TableState state, CancellationToken token)
     {
         var roleQuery = RoleManager.Roles.AsQueryable();
@@ -58,10 +63,8 @@
             );
         }
 
-        // Get the total count of items (filtered or not)
         var totalItems = await roleQuery.CountAsync();
 
-        // Apply pagination: skip rows for the current page and take the page size
         var pagedData = await roleQuery
                                 .Skip(state.Page * state.PageSize)
                                 .Take(state.PageSize)
@@ -81,9 +84,23 @@
             await table.ReloadServerData();
         }
     }
-    private async Task OpenDialogAsync(DialogOptions options)
+    private async Task OpenDialogAsync(Role? role = null)
     {
-        await Dialog.ShowAsync<CreateRoleDialog>("", options);
-        StateHasChanged();
+        var options = new DialogOptions { BackdropClick = false, FullWidth = true };
+        var parameters = new DialogParameters { ["Role"] = role };
+        await Dialog.ShowAsync<CreateRoleDialog>(role == null ? "New Role" : "Edit Role", options: options, parameters: parameters);
+        await table.ReloadServerData();
+    }
+    private async Task SwitchActivation(Role role, bool IsActive)
+    {
+        if (role != null)
+        {
+            role.IsActive = IsActive;
+            await RoleManager.UpdateAsync(role);
+            await UnitOfWork.SaveChangesAsync();
+
+            await table.ReloadServerData();
+            StateHasChanged();
+        }
     }
 }

@@ -1,0 +1,45 @@
+﻿
+<MudCard Outlined="true">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudGrid Justify="Justify.FlexStart">
+                <MudItem>
+                    <MudIcon Color="Color.Primary" Icon="@Icons.Material.Outlined.Group" />
+                </MudItem>
+                <MudItem>
+                    <MudText Color="Color.Primary">My Team</MudText>
+                </MudItem>
+            </MudGrid>
+            <MudDivider Style="width: 100%;" />
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        @if(!User.TeamId.HasValue)
+        {
+            <MudText Typo="Typo.body1">You have not joined a team yet.</MudText>
+        }
+        @if (Team == null || !Team.Any())
+        {
+            <MudProgressCircular Color="Color.Default" Indeterminate="true" />
+        }
+        else
+        {
+            <MudStack Wrap="Wrap.Wrap" Spacing="9" Row="true" Justify="Justify.Center"  AlignItems="AlignItems.Center">
+                @foreach (var member in Team)
+                {
+                    <MudItem>
+                        <Profile Name="@($"{member.FirstName} {member.LastName}")" Image=""  
+                        ForMe="@(member.Id == User.Id)" IsTeamLeader="@(member.Team.LeaderId == member.Id)"/>
+                    </MudItem>
+                }
+            </MudStack>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public User User { get; set; }
+    [Parameter]
+    public List<User> Team { get; set; }
+}

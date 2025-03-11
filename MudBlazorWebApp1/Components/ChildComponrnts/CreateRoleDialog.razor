@@ -1,17 +1,19 @@
 ﻿@inject RoleManager<Role> RoleManager
+@inject IUnitOfWork UOW
 
 <MudDialog>
     <DialogContent>
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
             <MudCard>
-                <MudCardHeader>Create New Role</MudCardHeader>
                 <MudTextField Label="Name" Class="mt-3"
-                @bind-Value="model.Name" For="@(() => model.Name)" />
+                              @bind-Value="model.Name" For="@(() => model.Name)" Required="true" RequiredError="Required" />
                 <MudCardActions>
                     <MudSpacer />
                     <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml5 mt-5">Add</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml5 mt-5">
+                        @(IsEditMode ? "Update" : "Add")
+                    </MudButton>
                 </MudCardActions>
             </MudCard>
             @if (!string.IsNullOrEmpty(error))
@@ -27,24 +29,40 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
-    private void Cancel() => MudDialog.Cancel();
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Role? Role { get; set; } 
+    private bool IsEditMode => Role != null;
     private CreateRoleModel model { get; set; } = new();
     private string error { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Role != null)
+        {
+            model.Name = Role.Name;
+        }
+    }
     public class CreateRoleModel
     {
         [Required]
         public string Name { get; set; }
     }
+    private void Cancel() => MudDialog.Cancel();
+
     private async Task OnValidSubmit(EditContext context)
     {
-        var role = new Role
-            {
-                Name = model.Name
-            };
-        await RoleManager.CreateAsync(role);
+        if (IsEditMode)
+        {
+            Role.Name = model.Name;
+            await RoleManager.UpdateAsync(Role);
+        }
+        else 
+        {
+            var newRole = new Role { Name = model.Name };
+            await RoleManager.CreateAsync(newRole);
+        }
+
+        await UOW.SaveChangesAsync();
         MudDialog.Close(DialogResult.Ok(true));
     }
-
 }

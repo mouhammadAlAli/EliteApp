@@ -2,14 +2,15 @@
 @attribute [Authorize]
 @inject ICurrentUserService CurrentUser
 @inject ApplicationDbContext _context
+@inject UserManager<User> UserManager
 
 
 <PageTitle>Home</PageTitle>
 
 <MudContainer Class="px-8" MaxWidth="MaxWidth.False">
     <MudGrid>
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard>
+        <MudItem xs="12" sm="12" md="12">
+            <MudCard Outlined="false">
                 @if (User == null || string.IsNullOrEmpty(User.Email))
                 {
                     <MudProgressCircular Color="Color.Default" Indeterminate="true" />
@@ -28,8 +29,8 @@
                 }
             </MudCard>
         </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-        </MudItem>
+        @* <MudItem xs="12" sm="6" md="4"> *@
+        @* </MudItem> *@
         @* My time + time off *@
         <MudItem xs="12" sm="6">
             <MudGrid>
@@ -46,25 +47,27 @@
         </MudItem>
         @* right side *@
         <MudItem xs="12" sm="6">
-            <MudPaper Elevation="2" Style="height: 100%">
+            <MudPaper Style="height: 55%">
                 <MyAnnouncements  Announcements="@Announcements"/>
             </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
-                1
+            <MudPaper Style="height: 3%" />
+            <MudPaper Style="height: 45%">
+                <MyTeam Team="TeamMembers" User="User" />
             </MudPaper>
         </MudItem>
         <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
-                2
-            </MudPaper>
+            
         </MudItem>
-        <MudItem xs="12" sm="12" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
-                3
-            </MudPaper>
-        </MudItem>
+        @* <MudItem xs="12" sm="6" md="4"> *@
+        @*     <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"> *@
+        @*         2 *@
+        @*     </MudPaper> *@
+        @* </MudItem> *@
+        @* <MudItem xs="12" sm="12" md="4"> *@
+        @*     <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"> *@
+        @*         3 *@
+        @*     </MudPaper> *@
+        @* </MudItem> *@
     </MudGrid>
 </MudContainer>
 
@@ -73,7 +76,7 @@
     private UserWorkingPeriod? CurrentWorkingPeriod { get; set; } = new();
     private List<UserWorkingPeriod> UserWorkingPeriodsThisWeek { get; set; } = new();
     private List<Announcement> Announcements { get; set; } = new();
-
+    private List<User> TeamMembers { get; set; } = new();
     protected override async Task OnInitializedAsync()
     {
         User = await CurrentUser.GetCurrentUserAsync();
@@ -91,8 +94,12 @@
              .FirstOrDefaultAsync();
 
         if (User.TeamId.HasValue)
-            Announcements = await _context.Announcements.Where(a => a.TeamId == User.TeamId || a.TeamId ==null).ToListAsync();
+            Announcements = await _context.Announcements.Where(a => a.TeamId == User.TeamId || a.TeamId == null).OrderByDescending(wp => wp.Id).Take(20).ToListAsync();
         else
-            Announcements = await _context.Announcements.Where(x => x.TeamId == null).ToListAsync();
+            Announcements = await _context.Announcements.Where(x => x.TeamId == null).OrderByDescending(wp => wp.Id).Take(20).ToListAsync();
+        TeamMembers = await UserManager.Users
+            .Where(u => u.TeamId == User.TeamId)
+            .Include(x => x.Team)
+            .ToListAsync();
     }
 }
