@@ -6,6 +6,7 @@
 @inject IUserStore<User> UserStore
 @inject NavigationManager NavigationManager
 @inject RoleManager<Role> RoleManager
+@inject IAttachmentService AttachmentService
 
 
 <MudDialog>
@@ -25,11 +26,13 @@
                         <MudSelectItem T="Role" Value="@role">@role.Name</MudSelectItem>
                     }
                 </MudSelect>
-                <MudFileUpload T="IBrowserFile" >
+                <MudFileUpload T="IBrowserFile" MaximumFileCount="1" Accept=".png, .jpg"
+                Class="mt-5" FilesChanged="HandleFileSelected">
                     <ActivatorContent>
-                        <MudFab Color="Color.Success"
-                                StartIcon="@Icons.Material.Filled.AttachFile" />
+                        <MudFab Color="Color.Info" Label="Profile Photo"
+                        StartIcon="@Icons.Material.Filled.AttachFile" />
                     </ActivatorContent>
+
                 </MudFileUpload>
                 <MudCardActions>
                     <MudSpacer />
@@ -66,6 +69,12 @@
     private Role? LastRole { get; set; } = null;
     bool success;
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+    private IBrowserFile ProfilePhoto{ set; get; }
+    private void HandleFileSelected(IBrowserFile file)
+    {
+        if(file != null)
+            ProfilePhoto = file;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -82,7 +91,7 @@
             model.Email = User.Email;
             model.FirstName = User.FirstName;
             model.LastName = User.LastName;
-            
+
         }
     }
     public class RegisterAccountForm
@@ -112,6 +121,11 @@
             if(LastRole != null)
                 await UserManager.RemoveFromRoleAsync(User, LastRole.Name);
             await UserManager.AddToRoleAsync(User, model.Role.Name);
+            if(ProfilePhoto != null)
+            {
+                await AttachmentService.DeleteByRefTypeAndRefId(Data.Enums.AttachmentRefType.Profile, User.Id);
+                await AttachmentService.UploadFileAsync(ProfilePhoto, Data.Enums.AttachmentRefType.Profile, User.Id);
+            }
 
         }else
         {
@@ -131,6 +145,8 @@
             }
             var createdUser = await UserManager.FindByEmailAsync(model.Email);
             await UserManager.AddToRoleAsync(createdUser, model.Role.Name);
+            if(ProfilePhoto != null)
+                 await AttachmentService.UploadFileAsync(ProfilePhoto, Data.Enums.AttachmentRefType.Profile, createdUser.Id);
             // var userId = await UserManager.GetUserIdAsync(user);
             // var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
             // code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));

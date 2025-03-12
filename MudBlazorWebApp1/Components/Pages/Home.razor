@@ -3,6 +3,7 @@
 @inject ICurrentUserService CurrentUser
 @inject ApplicationDbContext _context
 @inject UserManager<User> UserManager
+@inject IAttachmentService AttachmentService
 
 
 <PageTitle>Home</PageTitle>
@@ -19,7 +20,16 @@
                 {
                     <MudCardHeader>
                         <CardHeaderAvatar>
-                            <MudAvatar Color="Color.Secondary">@User.FirstName.First()</MudAvatar>
+                            @if (!string.IsNullOrEmpty(ProfileBase64))
+                            {
+                                <MudAvatar>
+                                    <MudImage Src=@ProfileBase64 />
+                                </MudAvatar>
+                            }
+                            else
+                            {
+                                <MudAvatar Color="Color.Secondary">@User.FirstName.First()</MudAvatar>
+                            }
                         </CardHeaderAvatar>
                         <CardHeaderContent>
                             <MudText Typo="Typo.body1">Hello, @User.FirstName @User.LastName</MudText>
@@ -29,9 +39,6 @@
                 }
             </MudCard>
         </MudItem>
-        @* <MudItem xs="12" sm="6" md="4"> *@
-        @* </MudItem> *@
-        @* My time + time off *@
         <MudItem xs="12" sm="6">
             <MudGrid>
                 <MudItem xs="12">
@@ -47,16 +54,11 @@
         </MudItem>
         @* right side *@
         <MudItem xs="12" sm="6">
-            <MudPaper Style="height: 55%">
-                <MyAnnouncements  Announcements="@Announcements"/>
-            </MudPaper>
-            <MudPaper Style="height: 3%" />
-            <MudPaper Style="height: 45%">
-                <MyTeam Team="TeamMembers" User="User" />
-            </MudPaper>
+            <MyAnnouncements  Announcements="@Announcements"/>
+            <MyTeam Team="TeamMembers" User="User" />
         </MudItem>
         <MudItem xs="12" sm="6" md="4">
-            
+
         </MudItem>
         @* <MudItem xs="12" sm="6" md="4"> *@
         @*     <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;"> *@
@@ -72,14 +74,23 @@
 </MudContainer>
 
 @code{
-    private User User { get; set; } = new(); 
+    private User User { get; set; } = new();
+    private Attachment ProfilePhoto = new();
+
     private UserWorkingPeriod? CurrentWorkingPeriod { get; set; } = new();
     private List<UserWorkingPeriod> UserWorkingPeriodsThisWeek { get; set; } = new();
     private List<Announcement> Announcements { get; set; } = new();
     private List<User> TeamMembers { get; set; } = new();
+    private string ProfileBase64;
     protected override async Task OnInitializedAsync()
     {
         User = await CurrentUser.GetCurrentUserAsync();
+
+        ProfilePhoto = await AttachmentService.GetAttachmentByRefIdAndRefTypeAsync(User.Id, Data.Enums.AttachmentRefType.Profile);
+        if(ProfilePhoto != null)
+        {
+            ProfileBase64 = AttachmentService.GetImageUrl(ProfilePhoto);
+        }
         var today = DateTime.UtcNow.Date;
         var startOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
         var endOfWeek = startOfWeek.AddDays(7).AddSeconds(-1);

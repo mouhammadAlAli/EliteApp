@@ -61,7 +61,7 @@
 @code {
     private DateTime StartOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
     private DateTime EndOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek).AddDays(7).AddSeconds(-1);
-    private string Title => StartOfWeek.Month == EndOfWeek.Month ? $"{StartOfWeek.Day} - {EndOfWeek.Day} {StartOfWeek.Month}" : $"{StartOfWeek.Day} {StartOfWeek.Month} - {EndOfWeek.Day} {EndOfWeek.Month}";
+    private string Title => StartOfWeek.Month == EndOfWeek.Month ? $"{StartOfWeek.Day} - {EndOfWeek.Day} {StartOfWeek.ToString("MMM")}" : $"{StartOfWeek.Day} {StartOfWeek.ToString("MMM")} - {EndOfWeek.Day} {EndOfWeek.ToString("MMM")}";
     protected override async Task OnInitializedAsync()
     {
 

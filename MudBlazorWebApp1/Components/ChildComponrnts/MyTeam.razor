@@ -1,5 +1,5 @@
-﻿
-<MudCard Outlined="true">
+﻿@inject IAttachmentService AttachmentService
+<MudCard Outlined="true" Class="mt-7" Style="height: 50%">
     <MudCardHeader>
         <CardHeaderContent>
             <MudGrid Justify="Justify.FlexStart">
@@ -24,15 +24,19 @@
         }
         else
         {
-            <MudStack Wrap="Wrap.Wrap" Spacing="9" Row="true" Justify="Justify.Center"  AlignItems="AlignItems.Center">
-                @foreach (var member in Team)
-                {
-                    <MudItem>
-                        <Profile Name="@($"{member.FirstName} {member.LastName}")" Image=""  
-                        ForMe="@(member.Id == User.Id)" IsTeamLeader="@(member.Team.LeaderId == member.Id)"/>
-                    </MudItem>
-                }
-            </MudStack>
+            <MudPaper Style="max-height: 400px; overflow-y: auto;">
+                <MudStack Wrap="Wrap.Wrap" Spacing="9" Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
+                    @foreach (var member in Team)
+                    {
+                        var profilePhoto = Attachments.FirstOrDefault(x => x.RefId == member.Id);
+                        var imageSrc = AttachmentService.GetImageUrl(profilePhoto);
+                        <MudItem>
+                            <Profile Name="@($"{member.FirstName} {member.LastName}")" Image=@imageSrc
+                            ForMe="@(member.Id == User.Id)" IsTeamLeader="@(member.Team.LeaderId == member.Id)" />
+                        </MudItem>
+                    }
+                </MudStack>
+            </MudPaper>
         }
     </MudCardContent>
 </MudCard>
@@ -42,4 +46,13 @@
     public User User { get; set; }
     [Parameter]
     public List<User> Team { get; set; }
+    private List<Attachment> Attachments = new();
+    protected async override Task OnParametersSetAsync()
+    {
+        foreach(var user in Team){
+            var attachment = await AttachmentService.GetAttachmentByRefIdAndRefTypeAsync(user.Id, Data.Enums.AttachmentRefType.Profile);
+            if(attachment != null)
+                Attachments.Add(attachment);
+        }
+    }
 }

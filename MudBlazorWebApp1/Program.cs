@@ -8,6 +8,7 @@ using MudBlazorWebApp1.Components.Account;
 using MudBlazorWebApp1.Data;
 using MudBlazorWebApp1.Data.Entities.Identity;
 using MudBlazorWebApp1.Data.Repositories;
+using MudBlazorWebApp1.Data.Services.AttachmentServices;
 using MudBlazorWebApp1.Data.Services.AuthServices;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,6 +53,7 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 
 var app = builder.Build();
 
