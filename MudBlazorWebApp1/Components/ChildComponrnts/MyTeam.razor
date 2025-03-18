@@ -28,11 +28,11 @@
                 <MudStack Wrap="Wrap.Wrap" Spacing="9" Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center">
                     @foreach (var member in Team)
                     {
-                        var profilePhoto = Attachments.FirstOrDefault(x => x.RefId == member.Id);
+                        var profilePhoto = member.Value;
                         var imageSrc = AttachmentService.GetImageUrl(profilePhoto);
                         <MudItem>
-                            <Profile Name="@($"{member.FirstName} {member.LastName}")" Image=@imageSrc
-                            ForMe="@(member.Id == User.Id)" IsTeamLeader="@(member.Team.LeaderId == member.Id)" />
+                            <Profile Name="@($"{member.Key.FirstName} {member.Key.LastName}")" Image=@imageSrc
+                            ForMe="@(member.Key.Id == User.Id)" IsTeamLeader="@(member.Key.Team.LeaderId == member.Key.Id)" />
                         </MudItem>
                     }
                 </MudStack>
@@ -45,14 +45,5 @@
     [Parameter]
     public User User { get; set; }
     [Parameter]
-    public List<User> Team { get; set; }
-    private List<Attachment> Attachments = new();
-    protected async override Task OnParametersSetAsync()
-    {
-        foreach(var user in Team){
-            var attachment = await AttachmentService.GetAttachmentByRefIdAndRefTypeAsync(user.Id, Data.Enums.AttachmentRefType.Profile);
-            if(attachment != null)
-                Attachments.Add(attachment);
-        }
-    }
+    public Dictionary<User,Attachment> Team { get; set; }
 }

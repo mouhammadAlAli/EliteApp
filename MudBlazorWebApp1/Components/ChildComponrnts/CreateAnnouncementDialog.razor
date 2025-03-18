@@ -1,6 +1,5 @@
 ﻿@inject ApplicationDbContext ApplicationContext
-
-@inject ApplicationDbContext ApplicationContext
+@inject IAttachmentService AttachmentService
 
 <MudDialog>
     <DialogContent>
@@ -22,6 +21,25 @@
                         }
                     </MudSelect>
                 }
+                <MudFileUpload T="IBrowserFile" MaximumFileCount="1" Accept=".png,.jpg,.jpeg,.pdf"
+                               Class="mt-5" FilesChanged="HandleFileSelected">
+                    <ActivatorContent>
+                        <MudFab Color="Color.Info" Label="Attachment"
+                                StartIcon="@Icons.Material.Filled.AttachFile" Disabled="@IsUploading" />
+                    </ActivatorContent>
+                </MudFileUpload>
+
+                @if (IsUploading)
+                {
+                    <MudProgressCircular Size="Size.Small" Color="Color.Primary" Indeterminate="true" Class="mt-2" />
+                }
+
+                @if (!string.IsNullOrEmpty(UploadStatusMessage))
+                {
+                    <MudText Class="mt-2" Color="@(UploadSuccess ? Color.Success : Color.Error)">
+                        @UploadStatusMessage
+                    </MudText>
+                }
                 <MudCardActions>
                     <MudSpacer />
                     <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
@@ -39,6 +57,51 @@
 
     [Parameter] public Announcement? SelectedAnnouncement { get; set; }
 
+    private IBrowserFile Attachment { set; get; }
+    private bool IsUploading { get; set; }
+    private string UploadStatusMessage { get; set; } = string.Empty;
+    private bool UploadSuccess { get; set; } = false;
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        if (file == null)
+        {
+            UploadStatusMessage = "No file selected.";
+            UploadSuccess = false;
+            return;
+        }
+
+        try
+        {
+            IsUploading = true;
+            UploadStatusMessage = "Uploading file...";
+            UploadSuccess = false;
+
+            const long maxFileSize = 10 * 1024 * 1024; // 10MB limit
+
+            if (file.Size > maxFileSize)
+            {
+                UploadStatusMessage = "File size exceeds the 10MB limit.";
+                return;
+            }
+
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+
+            Attachment = file;
+            UploadSuccess = true;
+            UploadStatusMessage = $"File '{file.Name}' uploaded successfully!";
+        }
+        catch (Exception ex)
+        {
+            UploadStatusMessage = $"Error uploading file: {ex.Message}";
+        }
+        finally
+        {
+            IsUploading = false;
+        }
+    }
     private bool isEditMode => SelectedAnnouncement != null;
     private bool ForAll = true;
     private Team? selectedTeam = null;
@@ -54,7 +117,6 @@
 
         if (isEditMode)
         {
-            // Populate the form with existing data
             model.Title = SelectedAnnouncement.Title;
             model.Description = SelectedAnnouncement.Description;
             selectedTeam = SelectedAnnouncement.Team;
@@ -80,7 +142,11 @@
             SelectedAnnouncement.Title = model.Title;
             SelectedAnnouncement.Description = model.Description;
             SelectedAnnouncement.TeamId = selectedTeam?.Id;
-
+            if (Attachment != null)
+            {
+                await AttachmentService.DeleteByRefTypeAndRefId(Data.Enums.AttachmentRefType.Announcement, SelectedAnnouncement.Id);
+                await AttachmentService.UploadFileAsync(Attachment, Data.Enums.AttachmentRefType.Announcement, SelectedAnnouncement.Id);
+            }
             ApplicationContext.Update(SelectedAnnouncement);
         }
         else
@@ -91,10 +157,12 @@
                     Description = model.Description,
                     TeamId = selectedTeam?.Id
                 };
-
             await ApplicationContext.AddAsync(announcement);
         }
-
+        if (Attachment != null)
+        {
+            await AttachmentService.UploadFileAsync(Attachment, Data.Enums.AttachmentRefType.Announcement, SelectedAnnouncement.Id);
+        }
         await ApplicationContext.SaveChangesAsync();
         MudDialog.Close(DialogResult.Ok(true));
     }

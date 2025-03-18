@@ -26,18 +26,29 @@
                         <MudSelectItem T="Role" Value="@role">@role.Name</MudSelectItem>
                     }
                 </MudSelect>
-                <MudFileUpload T="IBrowserFile" MaximumFileCount="1" Accept=".png, .jpg"
-                Class="mt-5" FilesChanged="HandleFileSelected">
+                <MudFileUpload T="IBrowserFile" MaximumFileCount="1" Accept=".png,.jpg,.jpeg,.pdf"
+                               Class="mt-5" FilesChanged="HandleFileSelected">
                     <ActivatorContent>
-                        <MudFab Color="Color.Info" Label="Profile Photo"
-                        StartIcon="@Icons.Material.Filled.AttachFile" />
+                        <MudFab Color="Color.Info" Label="Attachment"
+                                StartIcon="@Icons.Material.Filled.AttachFile" Disabled="@IsUploading" />
                     </ActivatorContent>
-
                 </MudFileUpload>
+
+                @if (IsUploading)
+                {
+                    <MudProgressCircular Size="Size.Small" Color="Color.Primary" Indeterminate="true" Class="mt-2" />
+                }
+
+                @if (!string.IsNullOrEmpty(UploadStatusMessage))
+                {
+                    <MudText Class="mt-2" Color="@(UploadSuccess ? Color.Success : Color.Error)">
+                        @UploadStatusMessage
+                    </MudText>
+                }
                 <MudCardActions>
                     <MudSpacer />
                     <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Register</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">@ButtonText</MudButton>
                 </MudCardActions>
             </MudCard>
             @if (!identityErrors.IsNullOrEmpty())
@@ -70,11 +81,54 @@
     bool success;
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
     private IBrowserFile ProfilePhoto{ set; get; }
-    private void HandleFileSelected(IBrowserFile file)
+    private string ButtonText => IsEditMode ? "Update" : "Register";
+    private bool IsUploading { get; set; }
+    private string UploadStatusMessage { get; set; } = string.Empty;
+    private bool UploadSuccess { get; set; } = false;
+
+    private async Task HandleFileSelected(IBrowserFile file)
     {
-        if(file != null)
+        if (file == null)
+        {
+            UploadStatusMessage = "No file selected.";
+            UploadSuccess = false;
+            return;
+        }
+
+        try
+        {
+            IsUploading = true;
+            UploadStatusMessage = "Uploading file...";
+            UploadSuccess = false;
+
+            const long maxFileSize = 10 * 1024 * 1024;
+
+
+            if (file.Size > maxFileSize)
+            {
+                UploadStatusMessage = "File size exceeds the 10MB limit.";
+                return;
+            }
+
+            // Read file content
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+
             ProfilePhoto = file;
+            UploadSuccess = true;
+            UploadStatusMessage = $"File '{file.Name}' uploaded successfully!";
+        }
+        catch (Exception ex)
+        {
+            UploadStatusMessage = $"Error uploading file: {ex.Message}";
+        }
+        finally
+        {
+            IsUploading = false;
+        }
     }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -114,7 +168,6 @@
     {
         if (IsEditMode)
         {
-            //if UserEmail != model.Email Send Confirmation 
             User.Email = model.Email;
             User.FirstName = model.FirstName;
             User.LastName = model.LastName;

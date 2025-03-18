@@ -13,6 +13,7 @@ public interface IAttachmentService
     Task UpdateRefIdAsync(Attachment attachment, int refId);
     Task DeleteByRefTypeAndRefId(AttachmentRefType refType, int refId);
     Task<Attachment> UploadFileAsync(IBrowserFile file, AttachmentRefType refType, int? refId = null);
+    bool HasAttachment(int refId, AttachmentRefType refType);
     void ValidateAttachmentType(AttachmentRefType refType, AttachmentType fileType);
     string GetImageUrl(Attachment attachment);
 }

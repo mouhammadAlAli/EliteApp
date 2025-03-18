@@ -79,8 +79,8 @@
 
     private UserWorkingPeriod? CurrentWorkingPeriod { get; set; } = new();
     private List<UserWorkingPeriod> UserWorkingPeriodsThisWeek { get; set; } = new();
-    private List<Announcement> Announcements { get; set; } = new();
-    private List<User> TeamMembers { get; set; } = new();
+    private Dictionary<Announcement,Attachment> Announcements { get; set; } = new();
+    private Dictionary<User,Attachment> TeamMembers { get; set; } = new();
     private string ProfileBase64;
     protected override async Task OnInitializedAsync()
     {
@@ -105,12 +105,29 @@
              .FirstOrDefaultAsync();
 
         if (User.TeamId.HasValue)
-            Announcements = await _context.Announcements.Where(a => a.TeamId == User.TeamId || a.TeamId == null).OrderByDescending(wp => wp.Id).Take(20).ToListAsync();
-        else
-            Announcements = await _context.Announcements.Where(x => x.TeamId == null).OrderByDescending(wp => wp.Id).Take(20).ToListAsync();
-        TeamMembers = await UserManager.Users
+        {
+            var announcementsList = await _context.Announcements.Where(a => a.TeamId == User.TeamId || a.TeamId == null).OrderByDescending(wp => wp.Id).Take(20).ToListAsync();
+            foreach (var x in announcementsList){
+                var attachment = await  AttachmentService.GetAttachmentByRefIdAndRefTypeAsync(x.Id, Data.Enums.AttachmentRefType.Announcement);
+                Announcements.Add(x, attachment);
+            }
+        }
+        else{
+            var announcementsList = await _context.Announcements.Where(x => x.TeamId == null).OrderByDescending(wp => wp.Id).Take(20).ToListAsync();
+            foreach (var x in announcementsList)
+            {
+                var attachment = await AttachmentService.GetAttachmentByRefIdAndRefTypeAsync(x.Id, Data.Enums.AttachmentRefType.Announcement);
+                Announcements.Add(x, attachment);
+            }   
+        }
+        var teamList = await UserManager.Users
             .Where(u => u.TeamId == User.TeamId)
             .Include(x => x.Team)
             .ToListAsync();
+        foreach (var user in teamList)
+        {
+            var attachment = await AttachmentService.GetAttachmentByRefIdAndRefTypeAsync(user.Id, Data.Enums.AttachmentRefType.Profile);
+            TeamMembers.Add(user ,attachment);
+        }
     }
 }

@@ -28,6 +28,7 @@
         <MudTd DataLabel="Actions">
             <MudToolBar>
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" OnClick="() => OpenDialogAsync(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteAsync(context)" />
             </MudToolBar>
         </MudTd>
     </RowTemplate>
@@ -100,6 +101,13 @@
 
         await table.ReloadServerData();
 
+        StateHasChanged();
+    }
+    private async Task DeleteAsync(Announcement announcement)
+    {
+        ApplicationDbContext.Remove(announcement);
+        await ApplicationDbContext.SaveChangesAsync();
+        await table.ReloadServerData();
         StateHasChanged();
     }
 }

@@ -10,12 +10,11 @@
         <MudText Typo="Typo.h4" Color="Color.Primary" Class="mt-4 mr-4">Timesheet</MudText>
     </MudItem>
 </MudGrid>
-<MudContainer Class="px-8" MaxWidth="MaxWidth.False">
+<MudContainer Class="px-8 mt-5" MaxWidth="MaxWidth.False">
     <MudGrid Justify="Justify.FlexStart">
-        <MudItem sm="6">
+        <MudItem xs="12" md="8">
+            <!-- 2/3 width -->
             <MudGrid>
-                <MudItem xs="12">
-                </MudItem>
                 <MudItem xs="12">
                     <MudCard Square="true" Outlined="true">
                         <MudCardHeader>
@@ -31,39 +30,56 @@
                                 <MudDivider Style="width: 100%;" />
                             </CardHeaderContent>
                         </MudCardHeader>
-                        <MudCardContent></MudCardContent>
+                        <MudCardContent>
+                            <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Start">
+                                @foreach (var day in Enumerable.Range(0, 7).Select(i => StartOfWeek.AddDays(i)))
+                                {
+                                    var dayPeriods = UserWorkingPeriods.Where(p => p.Date.Date == day.Date).OrderBy(p => p.From).ToList();
+                                    var totalMinutes = dayPeriods.Sum(p => (p.To.HasValue ? (p.To.Value - p.From).TotalMinutes : 0));
+                                    var totalHours = TimeSpan.FromMinutes(totalMinutes).ToString(@"hh\:mm");
+                                    var color = totalMinutes == 0 ? Color.Error : totalMinutes < 120 ? Color.Warning : Color.Success;
+
+                                    <MudTimelineItem Color="@color" Variant="Variant.Filled">
+                                        <ItemContent>
+                                            <MudAlert Severity="@(color == Color.Success ? Severity.Success : color == Color.Warning ? Severity.Warning : Severity.Error)">
+                                                @day.ToString("dddd, MMM dd") - Total: @totalHours
+                                            </MudAlert>
+                                        </ItemContent>
+                                    </MudTimelineItem>
+                                }
+                            </MudTimeline>
+                        </MudCardContent>
                     </MudCard>
-                </MudItem>
-                <MudItem xs="12">
-                    <MyStuff />
                 </MudItem>
             </MudGrid>
         </MudItem>
 
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
-                1
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="6" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
-                2
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" sm="12" md="4">
-            <MudPaper Elevation="2" Class="pa-4" Style="height: 200px;">
-                3
+        <MudItem xs="12" md="4">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 600px; display: flex; flex-direction: column; gap: 8px;">
+                <div>1</div>
+                <div>2</div>
+                <div>3</div>
             </MudPaper>
         </MudItem>
     </MudGrid>
 </MudContainer>
 
 @code {
+    [Inject] private ApplicationDbContext DbContext { get; set; }
+
     private DateTime StartOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
     private DateTime EndOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek).AddDays(7).AddSeconds(-1);
-    private string Title => StartOfWeek.Month == EndOfWeek.Month ? $"{StartOfWeek.Day} - {EndOfWeek.Day} {StartOfWeek.ToString("MMM")}" : $"{StartOfWeek.Day} {StartOfWeek.ToString("MMM")} - {EndOfWeek.Day} {EndOfWeek.ToString("MMM")}";
+    private string Title => StartOfWeek.Month == EndOfWeek.Month ? $"{StartOfWeek.Day} - {EndOfWeek.Day} {StartOfWeek:MMM}" : $"{StartOfWeek.Day} {StartOfWeek:MMM} - {EndOfWeek.Day} {EndOfWeek:MMM}";
+
+    private List<UserWorkingPeriod> UserWorkingPeriods = new();
+    // private string TotalHours => TimeSpan.FromMinutes(
+    //     UserWorkingPeriods.Sum(p => (p.To.HasValue ? (p.To.Value - p.From).TotalMinutes : 0))
+    // ).ToString(@"hh\:mm");
+
     protected override async Task OnInitializedAsync()
     {
-
+        UserWorkingPeriods = await DbContext.UserWorkingPeriods
+            .Where(u => u.Date >= StartOfWeek && u.Date <= EndOfWeek)
+            .ToListAsync();
     }
 }

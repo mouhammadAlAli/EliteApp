@@ -3,4 +3,5 @@
 public enum AttachmentRefType : byte
 {
     Profile = 1,
+    Announcement = 2,
 }

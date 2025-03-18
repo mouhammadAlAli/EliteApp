@@ -1,4 +1,5 @@
-﻿<MudCard Outlined="true" Style="height: 50%">
+﻿@using MudBlazorWebApp1.Data.Enums
+<MudCard Outlined="true" Style="height: 50%">
     <MudCardHeader>
         <CardHeaderContent>
             <MudGrid Justify="Justify.FlexStart">
@@ -15,20 +16,36 @@
     <MudCardContent>
         @if (Announcements == null || !Announcements.Any())
         {
-            <MudProgressCircular Color="Color.Default" Indeterminate="true" />
-
-        }else{
-            <MudPaper Style="max-height: 400px; overflow-y: auto;">
+            <MudProgressCircular Size="Size.Medium" Color="Color.Default" Indeterminate="true" />
+        }
+        else
+        {
+            <MudPaper Style="max-height: 400px; overflow-y: auto; width:100%">
                 <MudStack>
                     @foreach (var announcement in Announcements)
                     {
-                        <MudGrid>
+                        <MudGrid AlignItems="AlignItems.Center">
                             <MudItem>
-                                <MudIcon Color="Color.Primary" Icon="@Icons.Material.Outlined.School" />
+                                <MudIcon Size="Size.Small" Color="Color.Primary" Icon="@Icons.Material.Outlined.Announcement" />
                             </MudItem>
                             <MudItem>
-                                <MudText Typo="Typo.body1">@announcement.Title</MudText>
-                                <MudText Typo="Typo.body2">@announcement.Description</MudText>
+                                <MudText Typo="Typo.body1" Color="Color.Surface">@announcement.Key.Title</MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Surface">@announcement.Key.Description</MudText>
+                            </MudItem>
+                            <MudItem>
+                                <MudGrid Justify="Justify.FlexEnd">
+                                    @if (announcement.Value != null)
+                                    {
+                                        <MudItem>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Download"
+                                                           Color="Color.Secondary"
+                                                           OnClick="@(() => DownloadFileAsync(
+                                                    announcement.Value.FileContent,
+                                                    announcement.Key.Title,
+                                                    announcement.Value.Type))" />
+                                        </MudItem>
+                                    }
+                                </MudGrid>
                             </MudItem>
                         </MudGrid>
                         <MudDivider />
@@ -39,8 +56,28 @@
         }
     </MudCardContent>
 </MudCard>
+<script>
+    window.BlazorDownloadFile = (fileName, contentType, base64Data) => {
+        const blob = new Blob([Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))], { type: contentType });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    };
+</script>
 @code {
     [Parameter]
-    public List<Announcement> Announcements { get; set; }
+    public Dictionary<Announcement, Attachment> Announcements { get; set; }
 
+    [Inject] private IJSRuntime JS { get; set; }
+
+    private async Task DownloadFileAsync(byte[] fileBytes, string fileName, AttachmentType fileType)
+    {
+        var (mimeType, extension) = fileType.GetMimeTypeAndExtension();
+        var fullFileName = $"{fileName}.{extension}";
+        var buffer = Convert.ToBase64String(fileBytes);
+
+        await JS.InvokeVoidAsync("BlazorDownloadFile", fullFileName, mimeType, buffer);
+    }
 }

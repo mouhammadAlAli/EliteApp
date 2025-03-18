@@ -116,6 +116,7 @@ public class AttachmentService : IAttachmentService
         return refType switch
         {
             AttachmentRefType.Profile => ImagesAcceptedTypes,
+            AttachmentRefType.Announcement => AllAcceptedTypes,
             _ => []
         };
     }
@@ -139,5 +140,10 @@ public class AttachmentService : IAttachmentService
     {
         if (attachment == null) return "";
         return $"data:image/{attachment.Type};base64,{Convert.ToBase64String(attachment.FileContent)}";
+    }
+
+    public bool HasAttachment(int refId, AttachmentRefType refType)
+    {
+        return _context.Attachments.Any(x => x.RefId == refId && x.RefType == refType);
     }
 }
