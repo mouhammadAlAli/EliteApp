@@ -20,6 +20,7 @@
         <MudTh>First Name</MudTh>
         <MudTh>Last Name</MudTh>
         <MudTh>Email</MudTh>
+        <MudTh>Role</MudTh>
         <MudTh>IsActive</MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
@@ -28,6 +29,7 @@
         <MudTd DataLabel="First Name">@context.FirstName</MudTd>
         <MudTd DataLabel="Last Name">@context.LastName</MudTd>
         <MudTd DataLabel="Email">@context.Email</MudTd>
+        <MudTd DataLabel="Role">@(async (User v) => await GetFirstUserRoleAsync(context))</MudTd>
         <MudTd DataLabel="IsActive">
             <MudSwitch T="bool" Value="@context.IsActive" Color="Color.Success" UncheckedColor="Color.Error"
                        ValueChanged="@(async value => await SwitchActivation(context, value))" />
@@ -107,5 +109,12 @@
             await table.ReloadServerData();
             StateHasChanged();
         }
+    }
+    private async Task<string> GetFirstUserRoleAsync(User user)
+    {
+        var roles = await  UserManager.GetRolesAsync(user);
+        if (roles.Any())
+            return roles.First();
+        return "No Role";
     }
 }

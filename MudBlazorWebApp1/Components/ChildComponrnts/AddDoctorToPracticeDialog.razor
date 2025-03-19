@@ -1,0 +1,168 @@
+﻿@using Microsoft.IdentityModel.Tokens
+@inject ApplicationDbContext Context
+@inject IUnitOfWork UOW
+@inject UserManager<User> UserManager
+@inject RoleManager<Role> RoleManager
+@inject IAttachmentService AttachmentService
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            <MudCard>
+                <MudTextField Label="First name" Class="mt-3"
+                @bind-Value="model.FirstName" For="@(() => model.FirstName)" />
+                <MudTextField Label="Last name" Class="mt-3"
+                @bind-Value="model.LastName" For="@(() => model.LastName)" />
+                <MudTextField Label="Email" Class="mt-3"
+                @bind-Value="model.Email" For="@(() => model.Email)" />
+                @* <MudSelect T="Role" For="@(() => model.Role)" Label="Roles" MultiSelection="false" @bind-Value="model.Role" Required="true" RequiredError="Please Select a Role"> *@
+                @*     @foreach (var role in _roles) *@
+                @*     { *@
+                @*         <MudSelectItem T="Role" Value="@role">@role.Name</MudSelectItem> *@
+                @*     } *@
+                @* </MudSelect> *@
+                <MudFileUpload T="IBrowserFile" MaximumFileCount="1" Accept=".png,.jpg,.jpeg,.pdf"
+                Class="mt-5" FilesChanged="HandleFileSelected">
+                    <ActivatorContent>
+                        <MudFab Color="Color.Info" Label="Attachment"
+                        StartIcon="@Icons.Material.Filled.AttachFile" Disabled="@IsUploading" />
+                    </ActivatorContent>
+                </MudFileUpload>
+
+                @if (IsUploading)
+                {
+                    <MudProgressCircular Size="Size.Small" Color="Color.Primary" Indeterminate="true" Class="mt-2" />
+                }
+
+                @if (!string.IsNullOrEmpty(UploadStatusMessage))
+                {
+                    <MudText Class="mt-2" Color="@(UploadSuccess ? Color.Success : Color.Error)">
+                        @UploadStatusMessage
+                    </MudText>
+                }
+                <MudCardActions>
+                    <MudSpacer />
+                    <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Add</MudButton>
+                </MudCardActions>
+            </MudCard>
+            @if (!identityErrors.IsNullOrEmpty())
+            {
+                <MudItem xs="12" sm="5">
+                    <MudPaper Class="pa-4 mud-height-full">
+                        <MudText Typo="Typo.subtitle2">@($"Errors:")</MudText>
+                        @foreach (var error in identityErrors)
+                        {
+                            <MudText Color="@Color.Error">@error.Description</MudText>
+                        }
+
+                    </MudPaper>
+                </MudItem>
+            }
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private AddDoctorToPracticeModel model { get; set; } = new();
+    [Parameter] public int PracticeId { get; set; }
+    private IBrowserFile ProfilePhoto { set; get; }
+    private string error { get; set; }
+    private bool IsUploading { get; set; }
+    private string UploadStatusMessage { get; set; } = string.Empty;
+    private bool UploadSuccess { get; set; } = false;
+    private IEnumerable<IdentityError>? identityErrors;
+    private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
+
+
+    private async Task HandleFileSelected(IBrowserFile file)
+    {
+        if (file == null)
+        {
+            UploadStatusMessage = "No file selected.";
+            UploadSuccess = false;
+            return;
+        }
+
+        try
+        {
+            IsUploading = true;
+            UploadStatusMessage = "Uploading file...";
+            UploadSuccess = false;
+
+            const long maxFileSize = 10 * 1024 * 1024;
+
+
+            if (file.Size > maxFileSize)
+            {
+                UploadStatusMessage = "File size exceeds the 10MB limit.";
+                return;
+            }
+
+            // Read file content
+            using var stream = file.OpenReadStream(maxFileSize);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+
+            ProfilePhoto = file;
+            UploadSuccess = true;
+            UploadStatusMessage = $"File '{file.Name}' uploaded successfully!";
+        }
+        catch (Exception ex)
+        {
+            UploadStatusMessage = $"Error uploading file: {ex.Message}";
+        }
+        finally
+        {
+            IsUploading = false;
+        }
+    }
+    public class AddDoctorToPracticeModel
+    {
+        [Required]
+        public string FirstName { get; set; }
+
+        [Required]
+        public string LastName { get; set; }
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+    }
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        var user = new User
+            {
+                FirstName = model.FirstName,
+                LastName = model.LastName,
+                Email = model.Email,
+                UserName = model.Email,
+                PracticeId = PracticeId
+            };
+        var result = await UserManager.CreateAsync(user, "123456");
+
+        if (!result.Succeeded)
+        {
+            identityErrors = result.Errors;
+            return;
+        }
+        var createdUser = await UserManager.FindByEmailAsync(model.Email);
+        await UserManager.AddToRoleAsync(createdUser, AppConsts.UserConsts.DoctorRole);
+        if (ProfilePhoto != null)
+            await AttachmentService.UploadFileAsync(ProfilePhoto, Data.Enums.AttachmentRefType.Profile, createdUser.Id);
+        // var userId = await UserManager.GetUserIdAsync(user);
+        // var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+        // code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+        // var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+        //     NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+        //     new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+
+        // await EmailSender.SendConfirmationLinkAsync(user, model.Email, HtmlEncoder.Default.Encode(callbackUrl));
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MudBlazorWebApp1.Data;
 
@@ -11,9 +12,11 @@ using MudBlazorWebApp1.Data;
 namespace MudBlazorWebApp1.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250318090728_Add-Practices-Table")]
+    partial class AddPracticesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -153,7 +156,7 @@ namespace MudBlazorWebApp1.Migrations
 
                     b.HasIndex("TeamId");
 
-                    b.ToTable("Announcements", (string)null);
+                    b.ToTable("Announcements");
                 });
 
             modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.Attachment", b =>
@@ -183,7 +186,7 @@ namespace MudBlazorWebApp1.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Attachments", (string)null);
+                    b.ToTable("Attachments");
                 });
 
             modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.Identity.Role", b =>
@@ -311,7 +314,7 @@ namespace MudBlazorWebApp1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<Guid?>("Guid")
+                    b.Property<Guid>("Guid")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
@@ -320,7 +323,7 @@ namespace MudBlazorWebApp1.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Practices", (string)null);
+                    b.ToTable("Practices");
                 });
 
             modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.Team", b =>
@@ -346,7 +349,7 @@ namespace MudBlazorWebApp1.Migrations
 
                     b.HasIndex("LeaderId");
 
-                    b.ToTable("Teams", (string)null);
+                    b.ToTable("Teams");
                 });
 
             modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.UserWorkingPeriod", b =>
@@ -376,7 +379,7 @@ namespace MudBlazorWebApp1.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserWorkingPeriods", (string)null);
+                    b.ToTable("UserWorkingPeriods");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>

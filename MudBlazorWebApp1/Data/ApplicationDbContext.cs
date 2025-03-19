@@ -18,5 +18,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public virtual DbSet<Attachment> Attachments { get; set; }
     public DbSet<Team> Teams { get; set; }
     public DbSet<Announcement> Announcements { get; set; }
+    public DbSet<Practice> Practices { get; set; }
 }
 

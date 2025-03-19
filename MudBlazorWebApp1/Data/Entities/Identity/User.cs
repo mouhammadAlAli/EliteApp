@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MudBlazorWebApp1.Data.Entities.Identity;
 
-// Add profile data for application users by adding properties to the User class
 public class User : IdentityUser<int>, IActiveEntity
 {
     public string FirstName { get; set; }
@@ -15,4 +14,7 @@ public class User : IdentityUser<int>, IActiveEntity
     public int? TeamId { get; set; }
     [ForeignKey(nameof(TeamId))]
     public Team Team { get; set; }
+    public int? PracticeId { get; set; }
+    [ForeignKey(nameof(PracticeId))]
+    public Practice Practice { get; set; }
 }

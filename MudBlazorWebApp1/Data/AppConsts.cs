@@ -6,5 +6,6 @@ public static class AppConsts
     {
         public const string AdminEmail = "admin@elite.com";
         public const string AdminRole = "admin";
+        public const string DoctorRole = "doctor";
     }
 }

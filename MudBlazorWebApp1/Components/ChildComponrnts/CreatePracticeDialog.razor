@@ -1,0 +1,74 @@
+﻿@inject ApplicationDbContext Context
+@inject IUnitOfWork UOW
+
+<MudDialog>
+    <DialogContent>
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            <MudCard>
+                <MudTextField Label="Name" Class="mt-3"
+                @bind-Value="model.Name" For="@(() => model.Name)" Required="true" RequiredError="Required" />
+                <MudTextField Label="Guid" Class="mt-3"
+                @bind-Value="model.Guid" For="@(() => model.Guid)"/>
+                <MudCardActions>
+                    <MudSpacer />
+                    <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml5 mt-5">
+                        @(IsEditMode ? "Update" : "Add")
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <MudItem xs="12" sm="5">
+                    <MudPaper Class="pa-4 mud-height-full">
+                        <MudText Typo="Typo.subtitle2">@error</MudText>
+                    </MudPaper>
+                </MudItem>
+            }
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Practice? Practice { get; set; }
+    private bool IsEditMode => Practice != null;
+    private CreatePracticeModel model { get; set; } = new();
+    private string error { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Practice != null)
+        {
+            model.Name = Practice.Name;
+            model.Guid = Practice.Guid;
+        }
+    }
+    public class CreatePracticeModel
+    {
+        [Required]
+        public string Name { get; set; }
+        public Guid? Guid { get; set; }
+    }
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        if (IsEditMode)
+        {
+            Practice.Name = model.Name;
+            Practice.Guid = model.Guid;
+            Context.Update(Practice);
+            await UOW.SaveChangesAsync();
+        }
+        else
+        {
+            var newPractice = new Practice { Name = model.Name, Guid = model.Guid };
+            await Context.AddAsync(newPractice);
+        }
+
+        await UOW.SaveChangesAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}
