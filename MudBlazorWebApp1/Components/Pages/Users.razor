@@ -20,8 +20,9 @@
         <MudTh>First Name</MudTh>
         <MudTh>Last Name</MudTh>
         <MudTh>Email</MudTh>
-        <MudTh>Role</MudTh>
+        @* <MudTh>Role</MudTh> *@
         <MudTh>IsActive</MudTh>
+        <MudTh>Practice Guid</MudTh>
         <MudTh>Actions</MudTh>
     </HeaderContent>
     <RowTemplate>
@@ -29,11 +30,12 @@
         <MudTd DataLabel="First Name">@context.FirstName</MudTd>
         <MudTd DataLabel="Last Name">@context.LastName</MudTd>
         <MudTd DataLabel="Email">@context.Email</MudTd>
-        <MudTd DataLabel="Role">@(async (User v) => await GetFirstUserRoleAsync(context))</MudTd>
+        @* <MudTd DataLabel="Role">@(async () => await GetFirstUserRoleAsync(context))</MudTd> *@
         <MudTd DataLabel="IsActive">
             <MudSwitch T="bool" Value="@context.IsActive" Color="Color.Success" UncheckedColor="Color.Error"
                        ValueChanged="@(async value => await SwitchActivation(context, value))" />
         </MudTd>
+        <MudTd DataLabel="Practice">@(context.Practice != null ? context.Practice.Guid : "--")</MudTd>
         <MudTd DataLabel="Actions">
             <MudToolBar>
                 <MudIconButton OnClick="@(() => OpenDialogAsync(context))" Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
@@ -75,6 +77,7 @@
         var pagedData = await usersQuery
                                 .Skip(state.Page * state.PageSize)
                                 .Take(state.PageSize)
+                                .Include(x=>x.Practice)
                                 .ToListAsync();
 
         return new TableData<User>()

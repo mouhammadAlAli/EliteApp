@@ -47,12 +47,14 @@
                         <MudTh>Id</MudTh>
                         <MudTh>First Name</MudTh>
                         <MudTh>Last Name</MudTh>
+                        <MudTh>Email</MudTh>
                         <MudTh></MudTh>
                     </HeaderContent>
                     <RowTemplate Context="doctorRow">
                         <MudTd DataLabel="Id">@doctorRow.Id</MudTd>
                         <MudTd DataLabel="First Name">@doctorRow.FirstName</MudTd>
                         <MudTd DataLabel="Last Name">@doctorRow.LastName</MudTd>
+                        <MudTd DataLabel="Last Name">@doctorRow.Email</MudTd>
                         <MudTd>
                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteAsync(doctorRow)" />
                         </MudTd>
