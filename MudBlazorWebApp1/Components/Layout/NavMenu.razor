@@ -1,43 +1,84 @@
 ﻿@implements IDisposable
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@using System.Security.Claims
 
 <MudNavMenu>
     <AuthorizeView>
         <Authorized>
-            <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@context.User.Identity?.Name</MudNavLink>
-            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-            <MudNavGroup Title="User Management">
-                 <MudNavLink Href="/Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.VerifiedUser">Users</MudNavLink>
-                 <MudNavLink Href="/Roles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisedUserCircle">Roles</MudNavLink>
-            </MudNavGroup>
-            <MudNavLink Href="/Teams" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Group">Teams</MudNavLink>
-            <MudNavLink Href="/Announcements" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Campaign">Announcements</MudNavLink>
-            <MudNavLink Href="/Practices" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.MedicalServices">Practices</MudNavLink>
-            <MudNavLink Href="/DDD" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.MedicalServices">Doctor Page</MudNavLink>
-            <form action="Account/Logout" method="post">
-                <AntiforgeryToken />
-                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                <button type="submit" class="mud-nav-link mud-ripple">
-                    <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-3"></MudIcon> Logout
-                </button>
-            </form>
+            @if (user != null)
+            {
+                <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@user.Identity?.Name</MudNavLink>
+
+                @if (isAdmin)
+                {
+                    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+                    <MudNavGroup Title="User Management">
+                        <MudNavLink Href="/Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.VerifiedUser">Users</MudNavLink>
+                        <MudNavLink Href="/Roles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisedUserCircle">Roles</MudNavLink>
+                    </MudNavGroup>
+                    <MudNavLink Href="/Teams" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Group">Teams</MudNavLink>
+                    <MudNavLink Href="/Announcements" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Campaign">Announcements</MudNavLink>
+                    <MudNavLink Href="/Practices" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.MedicalServices">Practices</MudNavLink>
+                }
+
+                @if (isAdmin || isDoctor)
+                {
+                    <MudNavLink Href="/DDD" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.MedicalServices">Doctor Page</MudNavLink>
+                }
+
+                <form action="Account/Logout" method="post">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                    <button type="submit" class="mud-nav-link mud-ripple">
+                        <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-3"></MudIcon> Logout
+                    </button>
+                </form>
+            }
         </Authorized>
+
         <NotAuthorized>
-            <RedirectToLogin/>
+            <RedirectToLogin />
             <MudNavLink Href="Account/Login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Password">Login</MudNavLink>
         </NotAuthorized>
     </AuthorizeView>
 </MudNavMenu>
 
-
 @code {
     private string? currentUrl;
+    private ClaimsPrincipal? user;
+    private bool isAdmin = false;
+    private bool isDoctor = false;
+    private bool redirected = false;
 
-    protected override void OnInitialized()
+
+    protected override async Task OnInitializedAsync()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+
+        // Fetch user and roles
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            isAdmin = roles.Contains(AppConsts.UserConsts.AdminRole);
+            isDoctor = roles.Contains(AppConsts.UserConsts.DoctorRole);
+        }
+
+        StateHasChanged();
     }
+
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender && isDoctor && !currentUrl.Contains("/DDD"))
+    //     {
+    //         NavigationManager.NavigateTo("/DDD", forceLoad: true);
+    //     }
+    // }
+
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {

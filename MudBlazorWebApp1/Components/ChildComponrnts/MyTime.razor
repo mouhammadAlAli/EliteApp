@@ -91,7 +91,13 @@
             {
                 IsClockedIn = false;
             }
-            else if (!CurrentWorkingPeriod.To.HasValue)
+            else if (CurrentWorkingPeriod.To.HasValue)
+            {
+                IsClockedIn = false;
+                ClockedOutTime = CurrentWorkingPeriod.To;
+                ClockedInTime = CurrentWorkingPeriod.From;
+            }
+            else
             {
                 IsClockedIn = true;
                 ClockedInTime = CurrentWorkingPeriod.From;
@@ -101,12 +107,6 @@
                     ElapsedTime = DateTime.UtcNow - ClockedInTime.Value;
                     StartTimer();
                 }
-            }
-            else
-            {
-                IsClockedIn = false;
-                ClockedOutTime = CurrentWorkingPeriod.To;
-                ClockedInTime = CurrentWorkingPeriod.From;
             }
             if(PeriodsThisWeek != null)
             {
@@ -168,22 +168,28 @@
 
     private void StartTimer()
     {
-        _timer?.Dispose(); 
+        StopTimer(); // Ensure no old timers are running
+
         _timer = new System.Threading.Timer(async _ =>
         {
             if (IsClockedIn && ClockedInTime.HasValue)
             {
                 ElapsedTime = DateTime.UtcNow - ClockedInTime.Value;
-                await InvokeAsync(StateHasChanged);
+                if (_timer != null)
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
             }
-        }, null, 0, 5000); 
+        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
     }
 
     private void StopTimer()
     {
+        _timer?.Change(Timeout.Infinite, Timeout.Infinite); 
         _timer?.Dispose();
         _timer = null;
     }
+
 
     private async Task OpenDialogAsync()
     {

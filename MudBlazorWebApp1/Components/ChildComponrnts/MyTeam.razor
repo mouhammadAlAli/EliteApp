@@ -29,10 +29,13 @@
                     @foreach (var member in Team)
                     {
                         var profilePhoto = member.Value;
-                        var imageSrc = AttachmentService.GetImageUrl(profilePhoto);
+                        var imageSrc = profilePhoto != null ? AttachmentService.GetImageUrl(profilePhoto) : "default-profile.png";
+
                         <MudItem>
-                            <Profile Name="@($"{member.Key.FirstName} {member.Key.LastName}")" Image=@imageSrc
-                            ForMe="@(member.Key.Id == User.Id)" IsTeamLeader="@(member.Key.Team.LeaderId == member.Key.Id)" />
+                            <Profile Name="@($"{member.Key?.FirstName ?? "Unknown"} {member.Key?.LastName ?? "User"}")"
+                                     Image="@imageSrc"
+                                     ForMe="@(member.Key?.Id == User?.Id)"
+                                     IsTeamLeader="@(false)" />
                         </MudItem>
                     }
                 </MudStack>

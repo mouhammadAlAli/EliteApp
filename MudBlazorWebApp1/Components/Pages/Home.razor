@@ -6,6 +6,7 @@
 @inject IAttachmentService AttachmentService
 
 
+
 <PageTitle>Home</PageTitle>
 
 <MudContainer Class="px-8" MaxWidth="MaxWidth.False">
@@ -33,7 +34,7 @@
                         </CardHeaderAvatar>
                         <CardHeaderContent>
                             <MudText Typo="Typo.body1">Hello, @User.FirstName @User.LastName</MudText>
-                            <MudText Typo="Typo.body2">Role</MudText>
+                            <MudText Typo="Typo.body2">@Role</MudText>
                         </CardHeaderContent>
                     </MudCardHeader>
                 }
@@ -76,7 +77,7 @@
 @code{
     private User User { get; set; } = new();
     private Attachment ProfilePhoto = new();
-
+    string Role;
     private UserWorkingPeriod? CurrentWorkingPeriod { get; set; } = new();
     private List<UserWorkingPeriod> UserWorkingPeriodsThisWeek { get; set; } = new();
     private Dictionary<Announcement,Attachment> Announcements { get; set; } = new();
@@ -85,7 +86,8 @@
     protected override async Task OnInitializedAsync()
     {
         User = await CurrentUser.GetCurrentUserAsync();
-
+        var roles = await UserManager.GetRolesAsync(User);
+        Role = roles.First();
         ProfilePhoto = await AttachmentService.GetAttachmentByRefIdAndRefTypeAsync(User.Id, Data.Enums.AttachmentRefType.Profile);
         if(ProfilePhoto != null)
         {

@@ -32,13 +32,13 @@
             <MudToolBar>
                 <MudFab OnClick="@(() => OpenDialogAsync(context.Item.Id))" Label="New Doctor" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Small" Size="Size.Small" />
                 <MudSpacer />
-                <MudIconButton OnClick="()=>AddSelectedToPractice(context.Item.Id)" Disabled="@(!selectedUsers.Any())" Class="mt-5 mr-5" Color="Color.Primary" Icon="@Icons.Material.Filled.Add">Add</MudIconButton>
-                <MudSelect Class="mt-4" T="User" MultiSelection="true" HelperText="" @bind-SelectedValues="selectedUsers" MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))" Label="Available Doctors" AdornmentIcon="@Icons.Material.Filled.Search">
-                    @foreach (var user in AvailableDoctors)
-                    {
-                        <MudSelectItem T="User" Value="@user">@($"{user.FirstName} {user.LastName}")</MudSelectItem>
-                    }
-                </MudSelect>
+                @* <MudIconButton OnClick="()=>AddSelectedToPractice(context.Item.Id)" Disabled="@(!selectedUsers.Any())" Class="mt-5 mr-5" Color="Color.Primary" Icon="@Icons.Material.Filled.Add">Add</MudIconButton> *@
+                @* <MudSelect Class="mt-4" T="User" MultiSelection="true" HelperText="" @bind-SelectedValues="selectedUsers" MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))" Label="Available Doctors" AdornmentIcon="@Icons.Material.Filled.Search"> *@
+                @*     @foreach (var user in AvailableDoctors) *@
+                @*     { *@
+                @*         <MudSelectItem T="User" Value="@user">@($"{user.FirstName} {user.LastName}")</MudSelectItem> *@
+                @*     } *@
+                @* </MudSelect> *@
             </MudToolBar>
             @if (@context.Item.Doctors.Any())
             {
@@ -110,6 +110,7 @@
                 Items = pagedData
             };
     }
+
     private async Task OpenDialogAsync(Practice? practice = null)
     {
         var options = new DialogOptions { BackdropClick = false, FullWidth = true };
@@ -127,7 +128,7 @@
     private async Task DeleteAsync(User user)
     {
         user.PracticeId = null;
-        await UserManager.UpdateAsync(user);
+        await UserManager.DeleteAsync(user);
         StateHasChanged();
     }
     private async Task AddSelectedToPractice(int practiceId)

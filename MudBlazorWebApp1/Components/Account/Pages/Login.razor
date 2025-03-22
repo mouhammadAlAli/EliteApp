@@ -3,12 +3,15 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
-@using MudBlazorWebApp1.Data;
+@using MudBlazorWebApp1.Data
+@using System.Security.Claims
 
 @inject SignInManager<User> SignInManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject AuthenticationStateProvider AuthStateProvider
+
 
 <PageTitle>Log in</PageTitle>
 
@@ -25,13 +28,13 @@
             <MudGrid>
                 <MudItem md="12">
                     <MudStaticTextField For="@(() => Input.Email)" @bind-Value="Input.Email" 
-                        Label="Email" Placeholder="name@example.com" 
-                        UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } } )" />
+                    Label="Email" Placeholder="name@example.com" 
+                    UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } } )" />
                 </MudItem>
                 <MudItem md="12">
                     <MudStaticTextField For="@(() => Input.Password)" @bind-Value="Input.Password" 
-                        Label="Password" InputType="InputType.Password" Placeholder="password" 
-                        UserAttributes="@(new() { { "autocomplete", "current-password" }, { "aria-required", "true" } } )" />
+                    Label="Password" InputType="InputType.Password" Placeholder="password" 
+                    UserAttributes="@(new() { { "autocomplete", "current-password" }, { "aria-required", "true" } } )" />
                 </MudItem>
                 <MudItem md="12">
                     <MudStaticCheckBox For="@(() => Input.RememberMe)" @bind-Value="Input.RememberMe">Remember me</MudStaticCheckBox>
@@ -86,6 +89,15 @@
         if (result.Succeeded)
         { 
             Logger.LogInformation("User logged in.");
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+                if (roles.Contains(AppConsts.UserConsts.DoctorRole))
+                    ReturnUrl = "/DDD";
+            }
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.RequiresTwoFactor)

@@ -27,10 +27,10 @@
                     }
                 </MudSelect>
                 <MudFileUpload T="IBrowserFile" MaximumFileCount="1" Accept=".png,.jpg,.jpeg,.pdf"
-                               Class="mt-5" FilesChanged="HandleFileSelected">
+                Class="mt-5" FilesChanged="HandleFileSelected">
                     <ActivatorContent>
                         <MudFab Color="Color.Info" Label="Attachment"
-                                StartIcon="@Icons.Material.Filled.AttachFile" Disabled="@IsUploading" />
+                        StartIcon="@Icons.Material.Filled.AttachFile" Disabled="@IsUploading" />
                     </ActivatorContent>
                 </MudFileUpload>
 
@@ -133,6 +133,9 @@
     protected override async Task OnInitializedAsync()
     {
         _roles = await RoleManager.Roles.ToListAsync();
+        var doctorRole = _roles.Where(s => s.Name == AppConsts.UserConsts.DoctorRole).FirstOrDefault();
+        if(doctorRole!=null)
+            _roles.Remove(doctorRole);
 
         if(User!=null)
         {
