@@ -1,0 +1,109 @@
+﻿@page "/TimeOffRequests"
+@using MudBlazorWebApp1.Data.Enums
+@inject ApplicationDbContext Context
+@inject IDialogService Dialog
+@inject IUnitOfWork UnitOfWork
+@attribute [Authorize(Roles = AppConsts.UserConsts.AdminRole)]
+
+<MudTable ServerData="ServerReload" Dense="true" Hover="true" Bordered="false" @ref=table>
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Time Off Requests</MudText>
+        <MudSpacer/>
+        <MudSelect T="TimeOffCategory?" Label="Category" MultiSelection="false" @bind-Value="Category">
+            @foreach (var category in Enum.GetValues<TimeOffCategory>())
+            {
+                <MudSelectItem T="TimeOffCategory?" Value="@category">@category.ToString()</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSpacer/>
+        <MudSelect T="RequestTimeOffStatus?" Label="Status" MultiSelection="false" @bind-Value="Status">
+            @foreach (var status in Enum.GetValues<RequestTimeOffStatus>())
+            {
+                <MudSelectItem T="RequestTimeOffStatus?" Value="@status">@status.ToString()</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSpacer />
+        <MudIconButton OnClick="OnFilter" Icon="@Icons.Material.Filled.FilterList" />
+        @* <MudFab OnClick="@(() => OpenDialogAsync())" Label="New User" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" /> *@
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Id</MudTh>
+        <MudTh>User</MudTh>
+        <MudTh>From</MudTh>
+        <MudTh>To</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Created At</MudTh>
+        <MudTh>Change Status</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="User">@($"{context.User.FirstName} {context.User.LastName}")</MudTd>
+        <MudTd DataLabel="From">@context.From</MudTd>
+        <MudTd DataLabel="To">@context.To</MudTd>
+        <MudTd DataLabel="Status">@context.Status.ToString()</MudTd>
+        <MudTd DataLabel="Created At">@context.CreatedAt</MudTd>
+        <MudTd DataLabel="ChangeStatus">
+            <MudSelect T="RequestTimeOffStatus?" Label="Status" MultiSelection="false">
+                @foreach (var status in Enum.GetValues<RequestTimeOffStatus>())
+                {
+                    if (context.Status == status)
+                        continue;
+                    <MudSelectItem T="RequestTimeOffStatus?" Value="@status">@status.ToString()</MudSelectItem>
+                }
+            </MudSelect>
+
+            @* <MudToolBar> *@
+            @*     <MudIconButton OnClick="@(() => OpenDialogAsync(context))" Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" /> *@
+            @* </MudToolBar> *@
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching records found</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudText>Loading...</MudText>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+
+
+
+@code {
+    private TimeOffCategory? Category;
+    private RequestTimeOffStatus? Status;
+    private MudTable<TimeOffRequest> table;
+    private async Task<TableData<TimeOffRequest>> ServerReload(TableState state, CancellationToken token)
+    {
+        var query = Context.TimeOffRequests.AsQueryable();
+        query = query.OrderByDescending(x => x.Id);
+        if (Category.HasValue)
+        {
+            query = query.Where(x => x.TimeOffCategory == Category);
+        }
+        if(Status.HasValue)
+        {
+            query = query.Where(x => x.Status == Status);
+        }
+        var totalItems = await query.CountAsync();
+
+        var pagedData = await query
+                                .Skip(state.Page * state.PageSize)
+                                .Take(state.PageSize)
+                                .Include(x => x.User)
+                                .ToListAsync();
+
+        return new TableData<TimeOffRequest>()
+            {
+                TotalItems = totalItems,
+                Items = pagedData
+            };
+    }
+
+    private async void OnFilter()
+    {
+        await table.ReloadServerData();
+    }
+}

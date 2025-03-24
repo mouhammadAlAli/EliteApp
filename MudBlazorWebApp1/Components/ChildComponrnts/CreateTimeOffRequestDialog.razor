@@ -1,0 +1,107 @@
+﻿@using MudBlazorWebApp1.Data.Enums
+@inject ApplicationDbContext _context
+<MudDialog>
+    <TitleContent>
+        Request Time Off
+    </TitleContent>
+    <DialogContent>
+        <MudCard>
+            <MudStack Spacing="6">
+                <MudItem>
+                    <MudStack Row Spacing="7">
+                        <MudItem>
+                            <MudGrid Justify="Justify.FlexStart">
+                                <MudItem>
+                                    <MudDatePicker Label="From" Editable="true" @bind-Date="FromDate" Mask="@(new DateMask("dd.MM.yyyy"))" DateFormat="dd.MM.yyyy" Variant="Variant.Text" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudItem>
+                        <MudItem>
+                            <MudGrid Justify="Justify.FlexStart">
+                                <MudItem>
+                                    <MudDatePicker Label="To" Editable="true" @bind-Date="ToDate" Mask="@(new DateMask("dd.MM.yyyy"))" DateFormat="dd.MM.yyyy" Variant="Variant.Text" />
+                                </MudItem>
+                            </MudGrid>
+                        </MudItem>
+                    </MudStack>
+                </MudItem>
+                <MudItem>
+                    <MudSelect T="TimeOffCategory" Label="Category" MultiSelection="false" @bind-Value="Category">
+                        @foreach (var category in Enum.GetValues<TimeOffCategory>())
+                        {
+                            <MudSelectItem T="TimeOffCategory" Value="@category">@category.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem>
+                    <MudTextField Label="Note" @bind-Value="Note" />
+                </MudItem>
+            </MudStack>
+            <MudCardActions>
+                <MudSpacer />
+                <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+                <MudButton OnClick="OnValidSubmit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Save</MudButton>
+            </MudCardActions>
+        </MudCard>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    private DateTime? FromDate = DateTime.UtcNow;
+    private DateTime? ToDate = DateTime.UtcNow.AddDays(1);
+    private TimeOffCategory Category { get; set; }
+    private string Note { get; set; } = "";
+    private string ErrorMessage;
+    [Parameter]
+    public int UserId { get; set; }
+    private void Cancel() => MudDialog.Cancel();
+    private async Task OnValidSubmit()
+    {
+        ErrorMessage = string.Empty;
+
+        // Validation checks
+        if (FromDate == null || ToDate == null)
+        {
+            ErrorMessage = "Both dates must be selected.";
+            return;
+        }
+
+        if (FromDate > ToDate)
+        {
+            ErrorMessage = "The 'From' date cannot be after the 'To' date.";
+            return;
+        }
+
+        if (Category == TimeOffCategory.None)
+        {
+            ErrorMessage = "Please select a valid time off category.";
+            return;
+        }
+
+        try
+        {
+            var request = new TimeOffRequest
+                {
+                    From = FromDate.Value,
+                    To = ToDate.Value,
+                    Hours = (int)(ToDate.Value - FromDate.Value).TotalDays, // * working hours per day without weekends
+                    Note = Note,
+                    Status = RequestTimeOffStatus.Pending,
+                    TimeOffCategory = Category,
+                    UserId = UserId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+            _context.TimeOffRequests.Add(request);
+            await _context.SaveChangesAsync();
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred while saving: {ex.Message}";
+        }
+    }
+}
