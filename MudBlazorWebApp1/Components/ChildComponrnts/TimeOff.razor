@@ -1,4 +1,6 @@
-﻿<MudCard Square="true" Outlined="true">
+﻿@inject IDialogService DialogService
+
+<MudCard Square="true" Outlined="true">
     <MudCardHeader>
         <CardHeaderContent>
             <MudGrid Justify="Justify.FlexStart">
@@ -51,7 +53,7 @@
             <MudItem Xs="12">
                 <MudGrid>
                     <MudItem Xs="10">
-                        <MudButton OnClick="Submit" Variant="Variant.Outlined" Color="Color.Primary" Class="ma-3" FullWidth="true">
+                        <MudButton OnClick="OpenDialogAsync" Variant="Variant.Outlined" Color="Color.Primary" Class="ma-3" FullWidth="true">
                             Request Time Off
                         </MudButton>
                     </MudItem>
@@ -66,9 +68,34 @@
     </MudCardContent>
 </MudCard>
 @code {
-   
-
-    private void Submit()
+    [Parameter]
+    public int UserId { get; set; }
+    private async Task OpenDialogAsync()
     {
+        try
+        {
+
+            var parameters = new DialogParameters
+        {
+            { "UserId", UserId }
+        };
+
+
+            var options = new DialogOptions
+                {
+                    CloseOnEscapeKey = true,
+                    FullWidth = true,
+                    CloseButton = true,
+                    BackdropClick = false
+                };
+
+            var dialog = await DialogService.ShowAsync<CreateTimeOffRequestDialog>("Enter Time", parameters, options);
+
+            var result = await dialog.Result;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"An error occurred: {ex.Message}");
+        }
     }
 }
