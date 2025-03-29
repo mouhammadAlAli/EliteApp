@@ -1,0 +1,54 @@
+﻿@page "/practicedashboard"
+@attribute [Authorize(Roles = $"{AppConsts.UserConsts.DoctorRole},{AppConsts.UserConsts.AdminRole}")]
+@inject ICurrentUserService CurrentUserService
+@inject ApplicationDbContext Context
+@inject AuthenticationStateProvider AuthStateProvider
+
+@if (IsAdmin)
+{
+    <MudSelect T="int" ValueChanged="PracticeIdChanged" Value="PracticeID">
+        @foreach (var practice in Context.Practices.ToList())
+        {
+            <MudSelectItem Value="practice.Id">@practice.Name</MudSelectItem>
+        }
+    </MudSelect>
+}
+
+@if(PracticeID != 0)
+{
+    <MudText Typo="Typo.h5">Welcome Doctor: @PracticeName</MudText>
+}
+
+
+
+@code {
+
+    public string PracticeName { get; set; }
+
+    private bool IsAdmin = false;
+    private bool IsDoctor = false;
+    public int PracticeID { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = (await AuthStateProvider.GetAuthenticationStateAsync()).User;
+        IsAdmin = user.IsInRole(AppConsts.UserConsts.AdminRole);
+        IsDoctor = user.IsInRole(AppConsts.UserConsts.DoctorRole);
+        if (IsDoctor)
+        {
+            PracticeID = (await CurrentUserService.GetCurrentUserAsync()).PracticeId.Value;
+            PracticeIdChanged(PracticeID);
+        }
+    }
+
+    private void PracticeIdChanged(int practiceId)
+    {
+        PracticeID = practiceId;
+        if (practiceId != 0)
+        {
+            PracticeName = Context.Practices.FirstOrDefault(p => p.Id == practiceId).Name;
+        }
+        StateHasChanged();
+    }
+    
+}
