@@ -14,7 +14,8 @@ public static class DataInitializer
         {
             var roles = new List<Role>
             {
-                new Role { Name = AppConsts.UserConsts.AdminRole }
+                new Role { Name = AppConsts.UserConsts.AdminRole },
+                new Role { Name = AppConsts.UserConsts.DoctorRole }
             };
 
             foreach (var role in roles)
