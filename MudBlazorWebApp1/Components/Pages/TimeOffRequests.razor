@@ -8,14 +8,14 @@
 <MudTable ServerData="ServerReload" Dense="true" Hover="true" Bordered="false" @ref=table>
     <ToolBarContent>
         <MudText Typo="Typo.h6">Time Off Requests</MudText>
-        <MudSpacer/>
+        <MudSpacer />
         <MudSelect T="TimeOffCategory?" Label="Category" MultiSelection="false" @bind-Value="Category">
             @foreach (var category in Enum.GetValues<TimeOffCategory>())
             {
                 <MudSelectItem T="TimeOffCategory?" Value="@category">@category.ToString()</MudSelectItem>
             }
         </MudSelect>
-        <MudSpacer/>
+        <MudSpacer />
         <MudSelect T="RequestTimeOffStatus?" Label="Status" MultiSelection="false" @bind-Value="Status">
             @foreach (var status in Enum.GetValues<RequestTimeOffStatus>())
             {
@@ -24,8 +24,8 @@
         </MudSelect>
         <MudSpacer />
         <MudIconButton OnClick="OnFilter" Icon="@Icons.Material.Filled.FilterList" />
-        @* <MudFab OnClick="@(() => OpenDialogAsync())" Label="New User" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" /> *@
     </ToolBarContent>
+
     <HeaderContent>
         <MudTh>Id</MudTh>
         <MudTh>User</MudTh>
@@ -35,65 +35,85 @@
         <MudTh>Created At</MudTh>
         <MudTh>Change Status</MudTh>
     </HeaderContent>
+
     <RowTemplate>
         <MudTd DataLabel="Id">@context.Id</MudTd>
         <MudTd DataLabel="User">@($"{context.User.FirstName} {context.User.LastName}")</MudTd>
         <MudTd DataLabel="From">@context.From</MudTd>
         <MudTd DataLabel="To">@context.To</MudTd>
-        <MudTd DataLabel="Status">@context.Status.ToString()</MudTd>
+        <MudTd DataLabel="Status">
+            <MudText Color="@(StatusColor(context.Status))">@context.Status.ToString()</MudText>
+        </MudTd>
         <MudTd DataLabel="Created At">@context.CreatedAt</MudTd>
-        <MudTd DataLabel="ChangeStatus">
-            <MudSelect T="RequestTimeOffStatus?" Label="Status" MultiSelection="false">
-                @foreach (var status in Enum.GetValues<RequestTimeOffStatus>())
-                {
-                    if (context.Status == status)
-                        continue;
-                    <MudSelectItem T="RequestTimeOffStatus?" Value="@status">@status.ToString()</MudSelectItem>
-                }
-            </MudSelect>
 
-            @* <MudToolBar> *@
-            @*     <MudIconButton OnClick="@(() => OpenDialogAsync(context))" Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" /> *@
-            @* </MudToolBar> *@
+        <MudTd DataLabel="ChangeStatus">
+            <MudToolBar>
+                <MudSelect T="RequestTimeOffStatus?" Label="Status" MultiSelection="false"
+                           @bind-Value="@RowStatuses[context.Id]">
+                    @foreach (var status in Enum.GetValues<RequestTimeOffStatus>())
+                    {
+                        if (context.Status == status || status == RequestTimeOffStatus.Pending)
+                            continue;
+                        <MudSelectItem T="RequestTimeOffStatus?" Value="@status">@status.ToString()</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudIconButton Icon="@Icons.Material.Outlined.SwapHoriz"
+                               OnClick="() => ChangeStatus(context, RowStatuses[context.Id].Value)"
+                               Color="Color.Primary" />
+            </MudToolBar>
         </MudTd>
     </RowTemplate>
+
     <NoRecordsContent>
         <MudText>No matching records found</MudText>
     </NoRecordsContent>
+
     <LoadingContent>
         <MudText>Loading...</MudText>
     </LoadingContent>
+
     <PagerContent>
         <MudTablePager />
     </PagerContent>
 </MudTable>
 
-
-
-
 @code {
+    private Dictionary<int, RequestTimeOffStatus?> RowStatuses = new();
     private TimeOffCategory? Category;
     private RequestTimeOffStatus? Status;
     private MudTable<TimeOffRequest> table;
+
+    private Color StatusColor(RequestTimeOffStatus status)
+    {
+        return status switch
+        {
+            RequestTimeOffStatus.Approved => Color.Success,
+            RequestTimeOffStatus.Rejected => Color.Error,
+            _ => Color.Surface,
+        };
+    }
+
     private async Task<TableData<TimeOffRequest>> ServerReload(TableState state, CancellationToken token)
     {
         var query = Context.TimeOffRequests.AsQueryable();
         query = query.OrderByDescending(x => x.Id);
+
         if (Category.HasValue)
-        {
             query = query.Where(x => x.TimeOffCategory == Category);
-        }
-        if(Status.HasValue)
-        {
+
+        if (Status.HasValue)
             query = query.Where(x => x.Status == Status);
-        }
+
         var totalItems = await query.CountAsync();
 
         var pagedData = await query
-                                .Skip(state.Page * state.PageSize)
-                                .Take(state.PageSize)
-                                .Include(x => x.User)
-                                .ToListAsync();
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
+            .Include(x => x.User)
+            .ToListAsync();
+
+        RowStatuses = pagedData.ToDictionary(x => x.Id, x => (RequestTimeOffStatus?)null);
 
         return new TableData<TimeOffRequest>()
             {
@@ -105,5 +125,17 @@
     private async void OnFilter()
     {
         await table.ReloadServerData();
+    }
+
+    private async Task ChangeStatus(TimeOffRequest request, RequestTimeOffStatus? status)
+    {
+        if (request != null && status.HasValue)
+        {
+            request.Status = status.Value;
+            Context.Update(request);
+            await UnitOfWork.SaveChangesAsync();
+            await table.ReloadServerData();
+            StateHasChanged();
+        }
     }
 }

@@ -63,13 +63,27 @@
                 </MudGrid>
             </MudItem>
         </MudGrid>
-        
+
         <MudSpacer />
     </MudCardContent>
 </MudCard>
 @code {
     [Parameter]
     public int UserId { get; set; }
+    [Parameter]
+    public int NumberOfUsedVacation { get; set; }
+    [Parameter]
+    public int NumberOfUsedSickLeave { get; set; }
+
+    private int AvaialableVacation;
+    private int AvaialableSickLeave;
+
+    protected override void OnParametersSet()
+    {
+        AvaialableVacation = AppConsts.TimeOffConsts.VacationDaysNumber - NumberOfUsedVacation;
+        AvaialableSickLeave = AppConsts.TimeOffConsts.SickLeaveDaysNumber - NumberOfUsedSickLeave;
+    }
+
     private async Task OpenDialogAsync()
     {
         try

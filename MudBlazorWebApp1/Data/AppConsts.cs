@@ -8,4 +8,9 @@ public static class AppConsts
         public const string AdminRole = "admin";
         public const string DoctorRole = "doctor";
     }
+    public static class TimeOffConsts
+    {
+        public const int VacationDaysNumber = 15;
+        public const int SickLeaveDaysNumber = 5;
+    }
 }
