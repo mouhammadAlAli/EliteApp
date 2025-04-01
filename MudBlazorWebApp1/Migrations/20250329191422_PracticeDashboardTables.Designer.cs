@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MudBlazorWebApp1.Data;
 
@@ -11,9 +12,11 @@ using MudBlazorWebApp1.Data;
 namespace MudBlazorWebApp1.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250329191422_PracticeDashboardTables")]
+    partial class PracticeDashboardTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -622,45 +625,6 @@ namespace MudBlazorWebApp1.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.ToTable("ClaimAccountingErrors");
-                });
-
-            modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.PracticeDashbaord.Payment", b =>
-                {
-                    b.Property<long>("PaymentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("PaymentId"));
-
-                    b.Property<decimal>("PaymentAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("PostingDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("PracticeGuid")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("SourceEncounterGuid")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("PaymentId");
-
-                    b.ToTable("Payments");
-                });
-
-            modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.PracticeDashbaord.PaymentClaims", b =>
-                {
-                    b.Property<long>("ClaimId")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("EncounterGuid")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<long>("PaymentId")
-                        .HasColumnType("bigint");
-
-                    b.ToTable("PaymentClaims");
                 });
 
             modelBuilder.Entity("MudBlazorWebApp1.Data.Entities.PracticeDashbaord.Refund", b =>

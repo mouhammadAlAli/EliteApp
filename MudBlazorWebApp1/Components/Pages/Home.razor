@@ -4,9 +4,7 @@
 @inject ApplicationDbContext _context
 @inject UserManager<User> UserManager
 @inject IAttachmentService AttachmentService
-
-
-
+@inject NavigationManager NavigationManager
 <PageTitle>Home</PageTitle>
 
 <MudContainer Class="px-8" MaxWidth="MaxWidth.False">
@@ -88,6 +86,12 @@
         User = await CurrentUser.GetCurrentUserAsync();
         var roles = await UserManager.GetRolesAsync(User);
         Role = roles.First();
+
+        if (Role == AppConsts.UserConsts.DoctorRole)
+        {
+            NavigationManager.NavigateTo("/practicedashboard");
+        }
+
         ProfilePhoto = await AttachmentService.GetAttachmentByRefIdAndRefTypeAsync(User.Id, Data.Enums.AttachmentRefType.Profile);
         if(ProfilePhoto != null)
         {
