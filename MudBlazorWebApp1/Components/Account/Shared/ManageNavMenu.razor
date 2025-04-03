@@ -1,18 +1,33 @@
 ﻿
 @inject SignInManager<User> SignInManager
-
-<MudNavMenu>
-    <MudNavLink Href="Account/Manage" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Person">Profile</MudNavLink>
-    <MudNavLink Href="Account/Manage/Email" Icon="@Icons.Material.Filled.Email">Email</MudNavLink>
-    <MudNavLink Href="Account/Manage/ChangePassword" Icon="@Icons.Material.Filled.Lock">Password</MudNavLink>
-    @if (hasExternalLogins)
-    {
-        <MudNavLink Href="Account/Manage/ExternalLogins" Icon="@Icons.Material.Filled.PhoneLocked">External logins</MudNavLink>
-    }
-    <MudNavLink Href="Account/Manage/TwoFactorAuthentication" Icon="@Icons.Material.Filled.LockClock">Two-factor authentication</MudNavLink>
-    <MudNavLink Href="Account/Manage/PersonalData" Icon="@Icons.Material.Filled.PersonRemove">Personal data</MudNavLink>
-</MudNavMenu>
-
+<MudCard Elevation="2">
+    <MudCardHeader>
+        <CardHeaderContent >
+        <MudGrid Justify="Justify.FlexStart">
+            @* <MudItem> *@
+            @*     <MudIcon Color="Color.Primary" Icon="@Icons.Material.Outlined.AccessAlarm" /> *@
+            @* </MudItem> *@
+            <MudItem>
+                <MudText Color="Color.Primary" Typo="Typo.h6">Personal</MudText>
+            </MudItem>
+        </MudGrid>
+        <MudDivider Style="width: 100%;" />
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudNavMenu Bordered="true" Color="Color.Primary">
+                <MudNavLink Href="Account/Manage" Match="NavLinkMatch.All" Icon="@Icons.Material.TwoTone.Person" IconColor="Color.Tertiary">Profile</MudNavLink>
+                <MudNavLink Href="Account/Manage/Email" Icon="@Icons.Material.TwoTone.Email" IconColor="Color.Tertiary">Email</MudNavLink>
+                <MudNavLink Href="Account/Manage/ChangePassword" Icon="@Icons.Material.TwoTone.Lock" IconColor="Color.Tertiary">Password</MudNavLink>
+            @if (hasExternalLogins)
+            {
+                <MudNavLink Href="Account/Manage/ExternalLogins" Icon="@Icons.Material.TwoTone.PhoneLocked" IconColor="Color.Tertiary">External logins</MudNavLink>
+            }
+                <MudNavLink Href="Account/Manage/TwoFactorAuthentication" Icon="@Icons.Material.TwoTone.LockClock" IconColor="Color.Tertiary">Two-factor authentication</MudNavLink>
+                <MudNavLink Href="Account/Manage/PersonalData" Icon="@Icons.Material.TwoTone.PersonRemove" IconColor="Color.Tertiary">Personal data</MudNavLink>
+        </MudNavMenu>
+    </MudCardContent>
+</MudCard>
 @code {
     private bool hasExternalLogins;
 
