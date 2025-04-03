@@ -4,8 +4,7 @@
     <TitleContent>
         Request Time Off
     </TitleContent>
-    <DialogContent>
-        <MudCard>
+    <DialogContent><MudGrid>
             <MudStack Spacing="6">
                 <MudItem>
                     <MudStack Row Spacing="7">
@@ -37,13 +36,14 @@
                     <MudTextField Label="Note" @bind-Value="Note" />
                 </MudItem>
             </MudStack>
-            <MudCardActions>
-                <MudSpacer />
-                <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                <MudButton OnClick="OnValidSubmit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Save</MudButton>
-            </MudCardActions>
-        </MudCard>
+            
+        </MudGrid>
     </DialogContent>
+    <DialogActions>
+            <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+            <MudButton OnClick="OnValidSubmit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Save</MudButton>
+       
+    </DialogActions>
 </MudDialog>
 
 @code {

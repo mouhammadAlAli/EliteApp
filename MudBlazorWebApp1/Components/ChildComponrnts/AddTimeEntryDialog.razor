@@ -4,7 +4,7 @@
         Enter Time
     </TitleContent>
     <DialogContent>
-        <MudCard>
+        
             <MudGrid Justify="Justify.FlexStart">
                 <MudItem>
                     <MudDatePicker Label="Date" Editable="true" @bind-Date="Date" Mask="@(new DateMask("dd.MM.yyyy"))" DateFormat="dd.MM.yyyy" Variant="Variant.Text" />
@@ -22,13 +22,14 @@
                     <MudTimePicker Label="To" AmPm="true" TimeFormat="h:mm tt" @bind-Time="To" />
                 </MudItem>
             </MudGrid>
-            <MudCardActions>
-                <MudSpacer />
-                <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                <MudButton OnClick="OnValidSubmit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Save</MudButton>
-            </MudCardActions>
-        </MudCard>
+            
+        
     </DialogContent>
+    <DialogActions>
+            <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+            <MudButton OnClick="OnValidSubmit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Save</MudButton>
+        
+    </DialogActions>
 </MudDialog>
 
 @code {

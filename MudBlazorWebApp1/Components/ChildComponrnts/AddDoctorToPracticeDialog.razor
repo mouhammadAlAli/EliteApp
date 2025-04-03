@@ -9,7 +9,7 @@
     <DialogContent>
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
-            <MudCard>
+            <MudGrid Class="pa-5">
                 <MudTextField Label="First name" Class="mt-3"
                 @bind-Value="model.FirstName" For="@(() => model.FirstName)" />
                 <MudTextField Label="Last name" Class="mt-3"
@@ -41,12 +41,8 @@
                         @UploadStatusMessage
                     </MudText>
                 }
-                <MudCardActions>
-                    <MudSpacer />
-                    <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Add</MudButton>
-                </MudCardActions>
-            </MudCard>
+                
+            </MudGrid>
             @if (!identityErrors.IsNullOrEmpty())
             {
                 <MudItem xs="12" sm="5">
@@ -62,6 +58,10 @@
             }
         </EditForm>
     </DialogContent>
+    <DialogActions>
+            <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Add</MudButton>
+    </DialogActions>
 </MudDialog>
 
 @code {

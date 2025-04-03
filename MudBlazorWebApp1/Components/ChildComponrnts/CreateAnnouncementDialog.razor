@@ -5,7 +5,7 @@
     <DialogContent>
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
-            <MudCard>
+            <MudGrid Class="pa-5">
                 <MudTextField Label="Title" Class="mt-3"
                               @bind-Value="model.Title" For="@(() => model.Title)" Required="true" RequiredError="Required" />
                 <MudTextField Label="Description" Class="mt-3"
@@ -24,8 +24,7 @@
                 <MudFileUpload T="IBrowserFile" MaximumFileCount="1" Accept=".png,.jpg,.jpeg,.pdf"
                                Class="mt-5" FilesChanged="HandleFileSelected">
                     <ActivatorContent>
-                        <MudFab Color="Color.Info" Label="Attachment"
-                                StartIcon="@Icons.Material.Filled.AttachFile" Disabled="@IsUploading" />
+                        <MudIconButton Icon="@Icons.Material.Filled.AttachFile" Disabled="@IsUploading"></MudIconButton>    
                     </ActivatorContent>
                 </MudFileUpload>
 
@@ -40,16 +39,16 @@
                         @UploadStatusMessage
                     </MudText>
                 }
-                <MudCardActions>
-                    <MudSpacer />
-                    <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">
-                        @(isEditMode ? "Update" : "Publish")
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
+                
+            </MudGrid>
         </EditForm>
     </DialogContent>
+    <DialogActions>
+            <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">
+                @(isEditMode ? "Update" : "Publish")
+            </MudButton>
+    </DialogActions>
 </MudDialog>
 
 @code {

@@ -3,37 +3,37 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @using System.Security.Claims
 
-<MudNavMenu>
+<MudNavMenu Bordered="true" Color="Color.Primary">
     <AuthorizeView>
         <Authorized>
             @if (user != null)
             {
-                <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@user.Identity?.Name</MudNavLink>
+                <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" IconColor="Color.Primary"  Icon="@Icons.Material.TwoTone.Person">@user.Identity?.Name</MudNavLink>
 
                 @if (isAdmin)
                 {
-                    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-                    <MudNavGroup Title="User Management">
-                        <MudNavLink Href="/Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.VerifiedUser">Users</MudNavLink>
-                        <MudNavLink Href="/Roles" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisedUserCircle">Roles</MudNavLink>
+                    <MudNavLink Href="" Match="NavLinkMatch.All" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.Home">Home</MudNavLink>
+                    <MudNavGroup Title="User Management" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.SupervisedUserCircle" Expanded="true">
+                        <MudNavLink Href="/Users" Match="NavLinkMatch.Prefix" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.VerifiedUser">Users</MudNavLink>
+                        <MudNavLink Href="/Roles" Match="NavLinkMatch.Prefix" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.SupervisedUserCircle">Roles</MudNavLink>
                     </MudNavGroup>
-                    <MudNavLink Href="/Teams" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Group">Teams</MudNavLink>
-                    <MudNavLink Href="/Announcements" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Campaign">Announcements</MudNavLink>
-                    <MudNavLink Href="/Practices" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.MedicalServices">Practices</MudNavLink>
-                    <MudNavLink Href="/TimeOffRequests" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Event">Time Off Requests</MudNavLink>
+                    <MudNavLink Href="/Teams" Match="NavLinkMatch.All" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.Group">Teams</MudNavLink>
+                    <MudNavLink Href="/Announcements" Match="NavLinkMatch.All" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.Campaign">Announcements</MudNavLink>
+                    <MudNavLink Href="/Practices" Match="NavLinkMatch.All" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.MedicalServices">Practices</MudNavLink>
+                    <MudNavLink Href="/TimeOffRequests" Match="NavLinkMatch.All" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.Event">Time Off Requests</MudNavLink>
 
                 }
 
                 @if (isAdmin || isDoctor)
                 {
-                    <MudNavLink Href="/practicedashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.HealthAndSafety">Practice Dashboard</MudNavLink>
+                    <MudNavLink Href="/practicedashboard" Match="NavLinkMatch.All" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.HealthAndSafety">Practice Dashboard</MudNavLink>
                 }
 
                 <form action="Account/Logout" method="post">
                     <AntiforgeryToken />
                     <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                     <button type="submit" class="mud-nav-link mud-ripple">
-                        <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-3"></MudIcon> Logout
+                        <MudIcon Icon="@Icons.Material.TwoTone.Logout" Color="Color.Error" Class="mr-3"></MudIcon> Logout
                     </button>
                 </form>
             }
@@ -41,7 +41,7 @@
 
         <NotAuthorized>
             <RedirectToLogin />
-            <MudNavLink Href="Account/Login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Password">Login</MudNavLink>
+            <MudNavLink Href="Account/Login" Match="NavLinkMatch.Prefix" IconColor="Color.Primary" Icon="@Icons.Material.TwoTone.Password">Login</MudNavLink>
         </NotAuthorized>
     </AuthorizeView>
 </MudNavMenu>
