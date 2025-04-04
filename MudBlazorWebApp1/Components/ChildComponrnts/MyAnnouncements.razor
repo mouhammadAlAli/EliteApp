@@ -14,9 +14,13 @@
         </CardHeaderContent>
     </MudCardHeader>
     <MudCardContent>
-        @if (Announcements == null || !Announcements.Any())
+        @if (Announcements == null)
         {
             <MudProgressCircular Size="Size.Medium" Color="Color.Default" Indeterminate="true" />
+        }
+        @if (!Announcements.Any())
+        {
+            <MudText>No New Announcements</MudText>
         }
         else
         {
