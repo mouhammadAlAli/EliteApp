@@ -5,17 +5,11 @@
     <DialogContent>
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
-            <MudCard>
+            <MudGrid Class="pa-5">
                 <MudTextField Label="Name" Class="mt-3"
                               @bind-Value="model.Name" For="@(() => model.Name)" Required="true" RequiredError="Required" />
-                <MudCardActions>
-                    <MudSpacer />
-                    <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml5 mt-5">
-                        @(IsEditMode ? "Update" : "Add")
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
+                
+            </MudGrid>
             @if (!string.IsNullOrEmpty(error))
             {
                 <MudItem xs="12" sm="5">
@@ -26,6 +20,12 @@
             }
         </EditForm>
     </DialogContent>
+    <DialogActions>
+            <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml5 mt-5">
+                @(IsEditMode ? "Update" : "Add")
+            </MudButton>
+    </DialogActions>
 </MudDialog>
 
 @code {

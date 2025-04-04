@@ -12,7 +12,8 @@
             @if(!users.Any()){
                 <MudText Typo="Typo.h5">All users joined to team</MudText>
             }else{
-                <MudCard>
+
+                <MudGrid Class="pa-5">
                     <MudTextField Label="Name" Class="mt-3"
                     @bind-Value="model.Name" For="@(() => model.Name)" Required="true" RequiredError="Required" />
                     <MudTextField Label="Description" Class="mt-3"
@@ -29,15 +30,16 @@
                             <MudSelectItem T="User" Value="@user">@($"{user.FirstName} {user.LastName}")</MudSelectItem>
                         }
                     </MudSelect>
-                    <MudCardActions>
-                        <MudSpacer />
-                        <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
-                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Add</MudButton>
-                    </MudCardActions>
-                </MudCard>
+                   
+                </MudGrid>
             }
         </EditForm>
     </DialogContent>
+    <DialogActions>
+            <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Add</MudButton>
+        
+    </DialogActions>
 </MudDialog>
 
 @code {

@@ -77,7 +77,7 @@
        : (ClockedOutTime.HasValue && ClockedInTime.HasValue ? ClockedOutTime.Value - ClockedInTime.Value : TimeSpan.Zero);
     private Color WorkingHourDisplayColor => IsClockedIn ? Color.Success : Color.Primary;
     private string ButtonString => IsClockedIn ? "Clock Out" : "Clock In";
-    private string StartIcon => IsClockedIn ? Icons.Material.Outlined.Stop : Icons.Material.Outlined.Timer;
+    private string StartIcon => IsClockedIn ? Icons.Material.Outlined.TimerOff : Icons.Material.Outlined.Timer;
     private string LastClock => IsClockedIn ? $"Clocked In: {ClockedInTime.Humanize()}" : $"Clocked Out: {ClockedOutTime.Humanize()}";
     private bool IsLoading = true;
     protected override async Task OnParametersSetAsync()

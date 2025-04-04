@@ -8,12 +8,15 @@
 
 <PageTitle>Profile</PageTitle>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Profile</MudText>
+<MudCard>
+    <MudCardHeader>
+        <MudText Typo="Typo.h6" GutterBottom="true">Profile</MudText>
 
-<StatusMessage />
-
-<EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
-    <DataAnnotationsValidator />
+    </MudCardHeader>
+    <MudCardContent>
+        <StatusMessage />
+        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
+        <DataAnnotationsValidator />
 
     <MudGrid>
         <MudItem md="12">
@@ -24,12 +27,15 @@
                                 Label="Phone Number" HelperText="Please enter your phone number."
                                 UserAttributes="@(new() { { "autocomplete", "tel-national" } } )" />
         </MudItem>
+        </MudGrid>
+</EditForm>
+    </MudCardContent>
+    <MudCardActions>
         <MudItem md="12">
             <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Save</MudStaticButton>
         </MudItem>
-    </MudGrid>
-</EditForm>
-
+    </MudCardActions>
+</MudCard>
 @code {
     private User user = default!;
     private string? username;
