@@ -14,7 +14,5 @@ public class User : IdentityUser<int>, IActiveEntity
     public int? TeamId { get; set; }
     [ForeignKey(nameof(TeamId))]
     public Team Team { get; set; }
-    public int? PracticeId { get; set; }
-    [ForeignKey(nameof(PracticeId))]
-    public Practice Practice { get; set; }
+    public Guid? PracticeGuid { get; set; }
 }

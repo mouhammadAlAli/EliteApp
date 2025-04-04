@@ -4,15 +4,12 @@
 <MudDialog>
     <DialogContent>
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-            <DataAnnotationsValidator />
-            
+            <DataAnnotationsValidator />        
                 <MudGrid Class="pa-5">
                 <MudTextField Label="Name" Class="mt-3"
                 @bind-Value="model.Name" For="@(() => model.Name)" Required="true" RequiredError="Required" />
                 <MudTextField Label="Guid" Class="mt-3"
                 @bind-Value="model.Guid" For="@(() => model.Guid)"/>
-                
-
                 </MudGrid>
             @if (!string.IsNullOrEmpty(error))
             {
@@ -22,14 +19,13 @@
                     </MudPaper>
                 </MudItem>
             }
-        </EditForm>
-    </DialogContent>
-    <DialogActions>
             <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml5 mt-5">
                 @(IsEditMode ? "Update" : "Add")
             </MudButton>
-    </DialogActions>
+        </EditForm>
+    </DialogContent>
+
 </MudDialog>
 
 @code {
@@ -62,7 +58,6 @@
             Practice.Name = model.Name;
             Practice.Guid = model.Guid;
             Context.Update(Practice);
-            await UOW.SaveChangesAsync();
         }
         else
         {

@@ -4,12 +4,10 @@
 @inject UserManager<User> UserManager
 @inject ApplicationDbContext Context
 
-<MudDataGrid T="Practice" ServerData="(state) => ServerReload(state)">
+<MudDataGrid T="Practice" @ref="table" ServerData="(state) => ServerReload(state)">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Practices</MudText>
         <MudSpacer />
-        @* <MudTextField T="string" ValueChanged="@(s=>OnSearch(s))" Placeholder="Search" Adornment="Adornment.Start" *@
-        @*               AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField> *@
         <MudSpacer />
         <MudFab OnClick="@(() => OpenDialogAsync())" Label="New Practices" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Large" Size="Size.Medium" />
     </ToolBarContent>
@@ -30,42 +28,36 @@
     <ChildRowContent>
  <MudPaper Class="mud-elevation-2 pa-4" Style="border-left: 4px solid; border-radius: 8px;">
             <MudToolBar>
-                <MudFab OnClick="@(() => OpenDialogAsync(context.Item.Id))" Label="New Doctor" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Small" Size="Size.Small" />
+                <MudFab OnClick="@(() => OpenDialogAsync(context.Item.Guid))" Label="New Doctor" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Surface" IconSize="Size.Small" Size="Size.Small" />
                 <MudSpacer />
-                @* <MudIconButton OnClick="()=>AddSelectedToPractice(context.Item.Id)" Disabled="@(!selectedUsers.Any())" Class="mt-5 mr-5" Color="Color.Primary" Icon="@Icons.Material.Filled.Add">Add</MudIconButton> *@
-                @* <MudSelect Class="mt-4" T="User" MultiSelection="true" HelperText="" @bind-SelectedValues="selectedUsers" MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))" Label="Available Doctors" AdornmentIcon="@Icons.Material.Filled.Search"> *@
-                @*     @foreach (var user in AvailableDoctors) *@
-                @*     { *@
-                @*         <MudSelectItem T="User" Value="@user">@($"{user.FirstName} {user.LastName}")</MudSelectItem> *@
-                @*     } *@
-                @* </MudSelect> *@
             </MudToolBar>
-            @if (@context.Item.Doctors.Any())
-            {
-                <MudTable Items="@context.Item.Doctors.ToList()" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info">
-                    <HeaderContent>
-                        <MudTh>Id</MudTh>
-                        <MudTh>First Name</MudTh>
-                        <MudTh>Last Name</MudTh>
-                        <MudTh>Email</MudTh>
-                        <MudTh></MudTh>
-                    </HeaderContent>
-                    <RowTemplate Context="doctorRow">
-                        <MudTd DataLabel="Id">@doctorRow.Id</MudTd>
-                        <MudTd DataLabel="First Name">@doctorRow.FirstName</MudTd>
-                        <MudTd DataLabel="Last Name">@doctorRow.LastName</MudTd>
-                        <MudTd DataLabel="Last Name">@doctorRow.Email</MudTd>
-                        <MudTd>
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteAsync(doctorRow)" />
-                        </MudTd>
-                    </RowTemplate>
-                    <NoRecordsContent>
-                        <MudText>No Doctors yet</MudText>
-                    </NoRecordsContent>
-                </MudTable>
+            @if(context.Item.Guid.HasValue){
+                @if (GetDoctorsByPractice(context.Item.Guid.Value).Any())
+                {
+                    <MudTable Items="@GetDoctorsByPractice(context.Item.Guid.Value)" Hover="true" Breakpoint="Breakpoint.Sm" LoadingProgressColor="Color.Info">
+                        <HeaderContent>
+                            <MudTh>Id</MudTh>
+                            <MudTh>First Name</MudTh>
+                            <MudTh>Last Name</MudTh>
+                            <MudTh>Email</MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="doctorRow">
+                            <MudTd DataLabel="Id">@doctorRow.Id</MudTd>
+                            <MudTd DataLabel="First Name">@doctorRow.FirstName</MudTd>
+                            <MudTd DataLabel="Last Name">@doctorRow.LastName</MudTd>
+                            <MudTd DataLabel="Last Name">@doctorRow.Email</MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteAsync(doctorRow)" />
+                            </MudTd>
+                        </RowTemplate>
+                        <NoRecordsContent>
+                            <MudText>No Doctors yet</MudText>
+                        </NoRecordsContent>
+                    </MudTable>
+                }
             }
- </MudPaper>
-            
+        </MudPaper>
+
     </ChildRowContent>
     <NoRecordsContent>
         <MudText>No matching records found</MudText>
@@ -79,13 +71,16 @@
 </MudDataGrid>
 
 @code {
+    private MudDataGrid<Practice> table;
     private List<User> AvailableDoctors = new();
+    private List<User> AllDoctors = new();
     private IEnumerable<User> selectedUsers = new List<User>();
 
     protected override async Task OnInitializedAsync()
     {
         var list = await UserManager.GetUsersInRoleAsync(AppConsts.UserConsts.DoctorRole);
-        AvailableDoctors = list.Where(x => x.PracticeId == null).ToList();
+        AllDoctors = list.ToList();
+        AvailableDoctors = list.Where(x => x.PracticeGuid == null).ToList();
     }
 
     private string GetMultiSelectionText(List<string> selectedValues)
@@ -101,7 +96,7 @@
 
         var pagedData = await query
                                 .Skip(state.Page * state.PageSize)
-                                .Take(state.PageSize).Include(x=>x.Doctors)
+                                .Take(state.PageSize)
                                 .ToListAsync();
 
         return new GridData<Practice>()
@@ -117,31 +112,31 @@
         var parameters = new DialogParameters { ["Practice"] = practice };
         await Dialog.ShowAsync<CreatePracticeDialog>(practice == null ? "New Practice" : "Edit Practice", options: options, parameters: parameters);
         // await table.ReloadServerData();
+        StateHasChanged();
+        await table.ReloadServerData();
     }
-    private async Task OpenDialogAsync(int practiceId)
+    private async Task OpenDialogAsync(Guid? practiceGuid)
     {
-        var options = new DialogOptions { BackdropClick = false, FullWidth = true };
-        var parameters = new DialogParameters { ["PracticeId"] = practiceId };
-        await Dialog.ShowAsync<AddDoctorToPracticeDialog>("Add Doctor", options: options, parameters: parameters);
-        // await table.ReloadServerData();
+        if(practiceGuid.HasValue)
+        {
+            var options = new DialogOptions { BackdropClick = false, FullWidth = true };
+            var parameters = new DialogParameters { ["PracticeGuid"] = practiceGuid };
+            await Dialog.ShowAsync<AddDoctorToPracticeDialog>("Add Doctor", options: options, parameters: parameters);
+            StateHasChanged();
+            await table.ReloadServerData();
+        }
     }
     private async Task DeleteAsync(User user)
     {
-        user.PracticeId = null;
+        user.PracticeGuid = null;
         await UserManager.DeleteAsync(user);
         StateHasChanged();
+        await table.ReloadServerData();
     }
-    private async Task AddSelectedToPractice(int practiceId)
+    private List<User> GetDoctorsByPractice(Guid? practiceGuid)
     {
-        foreach(var doctor in selectedUsers)
-        {
-            doctor.PracticeId = practiceId;
-        }
-        Context.UpdateRange(selectedUsers);
-        await Context.SaveChangesAsync();
-        selectedUsers = new List<User>();
-        var list = await UserManager.GetUsersInRoleAsync(AppConsts.UserConsts.DoctorRole);
-        AvailableDoctors = list.Where(x => x.PracticeId == null).ToList();
-        StateHasChanged();
+        return AllDoctors
+            .Where(u => u.PracticeGuid.HasValue && u.PracticeGuid == practiceGuid)
+            .ToList();
     }
 }

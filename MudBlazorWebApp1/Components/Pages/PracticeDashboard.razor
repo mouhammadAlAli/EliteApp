@@ -6,7 +6,7 @@
 
 @if (IsAdmin)
 {
-    <MudSelect T="int" ValueChanged="PracticeIdChanged" Value="PracticeID">
+    <MudSelect T="Guid" ValueChanged="PracticeIdChanged" Value="PracticeID">
         @foreach (var practice in Context.Practices.ToList())
         {
             <MudSelectItem Value="practice.Id">@practice.Name</MudSelectItem>
@@ -14,7 +14,7 @@
     </MudSelect>
 }
 
-@if(PracticeID != 0)
+@if (PracticeID != Guid.Empty)
 {
     <MudText Typo="Typo.h5">Welcome Doctor: @PracticeName</MudText>
 }
@@ -27,7 +27,7 @@
 
     private bool IsAdmin = false;
     private bool IsDoctor = false;
-    public int PracticeID { get; set; }
+    public Guid PracticeID { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -36,17 +36,17 @@
         IsDoctor = user.IsInRole(AppConsts.UserConsts.DoctorRole);
         if (IsDoctor)
         {
-            PracticeID = (await CurrentUserService.GetCurrentUserAsync()).PracticeId.Value;
+            PracticeID = (await CurrentUserService.GetCurrentUserAsync()).PracticeGuid.Value;
             PracticeIdChanged(PracticeID);
         }
     }
 
-    private void PracticeIdChanged(int practiceId)
+    private void PracticeIdChanged(Guid practiceGuid)
     {
-        PracticeID = practiceId;
-        if (practiceId != 0)
+        PracticeID = practiceGuid;
+        if (practiceGuid != Guid.Empty)
         {
-            PracticeName = Context.Practices.FirstOrDefault(p => p.Id == practiceId).Name;
+            PracticeName = Context.Practices.FirstOrDefault(p => p.Guid == practiceGuid).Name;
         }
         StateHasChanged();
     }

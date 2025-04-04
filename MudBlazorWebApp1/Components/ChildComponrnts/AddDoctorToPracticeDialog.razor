@@ -16,12 +16,6 @@
                 @bind-Value="model.LastName" For="@(() => model.LastName)" />
                 <MudTextField Label="Email" Class="mt-3"
                 @bind-Value="model.Email" For="@(() => model.Email)" />
-                @* <MudSelect T="Role" For="@(() => model.Role)" Label="Roles" MultiSelection="false" @bind-Value="model.Role" Required="true" RequiredError="Please Select a Role"> *@
-                @*     @foreach (var role in _roles) *@
-                @*     { *@
-                @*         <MudSelectItem T="Role" Value="@role">@role.Name</MudSelectItem> *@
-                @*     } *@
-                @* </MudSelect> *@
                 <MudFileUpload T="IBrowserFile" MaximumFileCount="1" Accept=".png,.jpg,.jpeg,.pdf"
                 Class="mt-5" FilesChanged="HandleFileSelected">
                     <ActivatorContent>
@@ -56,19 +50,17 @@
                     </MudPaper>
                 </MudItem>
             }
-        </EditForm>
-    </DialogContent>
-    <DialogActions>
             <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">Add</MudButton>
-    </DialogActions>
+        </EditForm>
+    </DialogContent>
 </MudDialog>
 
 @code {
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
     private AddDoctorToPracticeModel model { get; set; } = new();
-    [Parameter] public int PracticeId { get; set; }
+    [Parameter] public Guid PracticeGuid { get; set; }
     private IBrowserFile ProfilePhoto { set; get; }
     private string error { get; set; }
     private bool IsUploading { get; set; }
@@ -142,7 +134,7 @@
                 LastName = model.LastName,
                 Email = model.Email,
                 UserName = model.Email,
-                PracticeId = PracticeId
+                PracticeGuid = PracticeGuid
             };
         var result = await UserManager.CreateAsync(user, "123456");
 

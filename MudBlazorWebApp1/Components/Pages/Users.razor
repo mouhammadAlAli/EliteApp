@@ -35,7 +35,7 @@
             <MudSwitch T="bool" Value="@context.IsActive" Color="Color.Success" UncheckedColor="Color.Error"
                        ValueChanged="@(async value => await SwitchActivation(context, value))" />
         </MudTd>
-        <MudTd DataLabel="Practice">@(context.Practice != null ? context.Practice.Guid : "--")</MudTd>
+        <MudTd DataLabel="Practice">@(context.PracticeGuid?.ToString() ?? "__")</MudTd>
         <MudTd DataLabel="Actions">
             <MudToolBar>
                 <MudIconButton OnClick="@(() => OpenDialogAsync(context))" Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" />
@@ -77,7 +77,6 @@
         var pagedData = await usersQuery
                                 .Skip(state.Page * state.PageSize)
                                 .Take(state.PageSize)
-                                .Include(x=>x.Practice)
                                 .ToListAsync();
 
         return new TableData<User>()

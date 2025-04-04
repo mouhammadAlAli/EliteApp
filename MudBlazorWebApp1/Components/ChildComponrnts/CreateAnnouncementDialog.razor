@@ -41,14 +41,12 @@
                 }
                 
             </MudGrid>
-        </EditForm>
-    </DialogContent>
-    <DialogActions>
             <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-5 mt-5">
                 @(isEditMode ? "Update" : "Publish")
             </MudButton>
-    </DialogActions>
+        </EditForm>
+    </DialogContent>
 </MudDialog>
 
 @code {

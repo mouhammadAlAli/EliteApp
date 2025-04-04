@@ -1,9 +1,13 @@
 ﻿@page "/TimeOffRequests"
 @using MudBlazorWebApp1.Data.Enums
+@using System.Security.Claims
 @inject ApplicationDbContext Context
 @inject IDialogService Dialog
 @inject IUnitOfWork UnitOfWork
-@attribute [Authorize(Roles = AppConsts.UserConsts.AdminRole)]
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<User> UserManager
+
+@attribute [Authorize]
 
 <MudTable ServerData="ServerReload" Dense="true" Hover="true" Bordered="false" @ref=table>
     <ToolBarContent>
@@ -27,42 +31,53 @@
     </ToolBarContent>
 
     <HeaderContent>
-        <MudTh>Id</MudTh>
-        <MudTh>User</MudTh>
+        @if (isAdmin)
+        {
+            <MudTh>Id</MudTh>
+            <MudTh>User</MudTh>
+        }
         <MudTh>From</MudTh>
         <MudTh>To</MudTh>
         <MudTh>Status</MudTh>
         <MudTh>Created At</MudTh>
-        <MudTh>Change Status</MudTh>
+        @if (isAdmin)
+        {
+            <MudTh>Change Status</MudTh>
+        }
     </HeaderContent>
 
     <RowTemplate>
-        <MudTd DataLabel="Id">@context.Id</MudTd>
-        <MudTd DataLabel="User">@($"{context.User.FirstName} {context.User.LastName}")</MudTd>
+        @if (isAdmin)
+        {
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="User">@($"{context.User.FirstName} {context.User.LastName}")</MudTd>
+        }
         <MudTd DataLabel="From">@context.From</MudTd>
         <MudTd DataLabel="To">@context.To</MudTd>
         <MudTd DataLabel="Status">
             <MudText Color="@(StatusColor(context.Status))">@context.Status.ToString()</MudText>
         </MudTd>
         <MudTd DataLabel="Created At">@context.CreatedAt</MudTd>
+        @if (isAdmin)
+        {
+            <MudTd DataLabel="ChangeStatus">
+                <MudToolBar>
+                    <MudSelect T="RequestTimeOffStatus?" Label="Status" MultiSelection="false"
+                    @bind-Value="@RowStatuses[context.Id]">
+                        @foreach (var status in Enum.GetValues<RequestTimeOffStatus>())
+                        {
+                            if (context.Status == status || status == RequestTimeOffStatus.Pending)
+                                continue;
+                            <MudSelectItem T="RequestTimeOffStatus?" Value="@status">@status.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
 
-        <MudTd DataLabel="ChangeStatus">
-            <MudToolBar>
-                <MudSelect T="RequestTimeOffStatus?" Label="Status" MultiSelection="false"
-                           @bind-Value="@RowStatuses[context.Id]">
-                    @foreach (var status in Enum.GetValues<RequestTimeOffStatus>())
-                    {
-                        if (context.Status == status || status == RequestTimeOffStatus.Pending)
-                            continue;
-                        <MudSelectItem T="RequestTimeOffStatus?" Value="@status">@status.ToString()</MudSelectItem>
-                    }
-                </MudSelect>
-
-                <MudIconButton Icon="@Icons.Material.Outlined.SwapHoriz"
-                               OnClick="() => ChangeStatus(context, RowStatuses[context.Id].Value)"
-                               Color="Color.Primary" />
-            </MudToolBar>
-        </MudTd>
+                    <MudIconButton Icon="@Icons.Material.Outlined.SwapHoriz"
+                    OnClick="() => ChangeStatus(context, RowStatuses[context.Id].Value)"
+                    Color="Color.Primary" />
+                </MudToolBar>
+            </MudTd>
+        }
     </RowTemplate>
 
     <NoRecordsContent>
@@ -83,6 +98,8 @@
     private TimeOffCategory? Category;
     private RequestTimeOffStatus? Status;
     private MudTable<TimeOffRequest> table;
+    private bool isAdmin;
+    private int UserId;
 
     private Color StatusColor(RequestTimeOffStatus status)
     {
@@ -93,12 +110,23 @@
             _ => Color.Surface,
         };
     }
-
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            var roles = authState.User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            isAdmin = roles.Contains(AppConsts.UserConsts.AdminRole);
+            var appUser = await UserManager.GetUserAsync(authState.User);
+            UserId = appUser.Id;
+        }
+    }
     private async Task<TableData<TimeOffRequest>> ServerReload(TableState state, CancellationToken token)
     {
         var query = Context.TimeOffRequests.AsQueryable();
         query = query.OrderByDescending(x => x.Id);
-
+        if (!isAdmin)
+            query = query.Where(x => x.UserId == UserId);
         if (Category.HasValue)
             query = query.Where(x => x.TimeOffCategory == Category);
 
