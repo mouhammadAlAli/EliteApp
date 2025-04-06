@@ -31,6 +31,15 @@
                             </CardHeaderContent>
                         </MudCardHeader>
                         <MudCardContent>
+                            <MudDateRangePicker Label="Select Range"
+                                                StartText="From"
+                                                EndText="To"
+                                                @bind-DateRange="_dateRange"
+                                                Color="Color.Primary"
+                                                Dense="true"
+                                                Adornment="Adornment.Start"
+                                                AdornmentIcon="@Icons.Material.Outlined.CalendarMonth"
+                                                OnClosed="OnDateRangeChanged" />
                             <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Start">
                                 @foreach (var day in Enumerable.Range(0, 7).Select(i => StartOfWeek.AddDays(i)))
                                 {
@@ -66,17 +75,37 @@
 
 @code {
     [Inject] private ApplicationDbContext DbContext { get; set; }
+    private DateRange _dateRange;
 
     private DateTime StartOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
     private DateTime EndOfWeek = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek).AddDays(7).AddSeconds(-1);
     private string Title => StartOfWeek.Month == EndOfWeek.Month ? $"{StartOfWeek.Day} - {EndOfWeek.Day} {StartOfWeek:MMM}" : $"{StartOfWeek.Day} {StartOfWeek:MMM} - {EndOfWeek.Day} {EndOfWeek:MMM}";
 
     private List<UserWorkingPeriod> UserWorkingPeriods = new();
-    // private string TotalHours => TimeSpan.FromMinutes(
-    //     UserWorkingPeriods.Sum(p => (p.To.HasValue ? (p.To.Value - p.From).TotalMinutes : 0))
-    // ).ToString(@"hh\:mm");
+
 
     protected override async Task OnInitializedAsync()
+    {
+        var today = DateTime.Today;
+        StartOfWeek = today.AddDays(-(int)today.DayOfWeek);
+        EndOfWeek = StartOfWeek.AddDays(7).AddSeconds(-1);
+
+        _dateRange = new DateRange(StartOfWeek, EndOfWeek);
+
+        await LoadWorkingPeriods();
+    }
+    private async Task OnDateRangeChanged()
+    {
+        if (_dateRange?.Start != null && _dateRange?.End != null)
+        {
+            StartOfWeek = _dateRange.Start.Value.Date;
+            EndOfWeek = _dateRange.End.Value.Date.AddDays(1).AddSeconds(-1); // include full end day
+            await LoadWorkingPeriods();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadWorkingPeriods()
     {
         UserWorkingPeriods = await DbContext.UserWorkingPeriods
             .Where(u => u.Date >= StartOfWeek && u.Date <= EndOfWeek)

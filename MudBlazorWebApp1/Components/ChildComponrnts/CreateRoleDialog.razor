@@ -29,6 +29,8 @@
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
     [Parameter] public Role? Role { get; set; } 
+    [Parameter] public MudTable<Role> Table { get; set; }
+
     private bool IsEditMode => Role != null;
     private CreateRoleModel model { get; set; } = new();
     private string error { get; set; }
@@ -61,6 +63,7 @@
         }
 
         await UOW.SaveChangesAsync();
+        await Table.ReloadServerData();
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

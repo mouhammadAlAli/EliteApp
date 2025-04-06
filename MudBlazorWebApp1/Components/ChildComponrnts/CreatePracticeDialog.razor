@@ -4,13 +4,13 @@
 <MudDialog>
     <DialogContent>
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-            <DataAnnotationsValidator />        
-                <MudGrid Class="pa-5">
+            <DataAnnotationsValidator />
+            <MudGrid Class="pa-5">
                 <MudTextField Label="Name" Class="mt-3"
                 @bind-Value="model.Name" For="@(() => model.Name)" Required="true" RequiredError="Required" />
                 <MudTextField Label="Guid" Class="mt-3"
                 @bind-Value="model.Guid" For="@(() => model.Guid)"/>
-                </MudGrid>
+            </MudGrid>
             @if (!string.IsNullOrEmpty(error))
             {
                 <MudItem xs="12" sm="5">
@@ -25,16 +25,15 @@
             </MudButton>
         </EditForm>
     </DialogContent>
-
 </MudDialog>
 
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
     [Parameter] public Practice? Practice { get; set; }
+    [Parameter] public MudDataGrid<Practice> Table { get; set; }
     private bool IsEditMode => Practice != null;
     private CreatePracticeModel model { get; set; } = new();
     private string error { get; set; }
-
     protected override void OnInitialized()
     {
         if (Practice != null)
@@ -50,7 +49,6 @@
         public Guid? Guid { get; set; }
     }
     private void Cancel() => MudDialog.Cancel();
-
     private async Task OnValidSubmit(EditContext context)
     {
         if (IsEditMode)
@@ -64,8 +62,8 @@
             var newPractice = new Practice { Name = model.Name, Guid = model.Guid };
             await Context.AddAsync(newPractice);
         }
-
         await UOW.SaveChangesAsync();
+        await Table.ReloadServerData();
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

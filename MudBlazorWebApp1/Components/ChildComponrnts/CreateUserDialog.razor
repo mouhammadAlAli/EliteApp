@@ -72,6 +72,7 @@
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
     [Parameter] public User? User { get; set; }
+    [Parameter] public MudTable<User> Table { get; set; }
     private bool IsEditMode => User != null;
     private void Cancel() => MudDialog.Cancel();
     RegisterAccountForm model = new RegisterAccountForm();
@@ -213,7 +214,7 @@
             // await EmailSender.SendConfirmationLinkAsync(user, model.Email, HtmlEncoder.Default.Encode(callbackUrl));
         }
         success = true;
-       
+        await Table.ReloadServerData();
         MudDialog.Close(DialogResult.Ok(true));
 
     }

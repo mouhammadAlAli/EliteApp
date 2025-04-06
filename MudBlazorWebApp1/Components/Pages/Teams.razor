@@ -92,7 +92,7 @@
                     CloseButton = true,
                     BackdropClick = false
                 };
-            var parameters = new DialogParameters { ["Team"] = team };
+            var parameters = new DialogParameters { ["Team"] = team, ["Table"] = table };
 
             var dialog = await DialogService.ShowAsync<CreateTeamDialog>( team == null ?"Create New Team" : "Edit Team", options: options, parameters:parameters);
 

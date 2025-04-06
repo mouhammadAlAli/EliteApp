@@ -89,7 +89,7 @@
     private async Task OpenDialogAsync(User? User = null)
     {
         DialogOptions _backdropClick = new() { BackdropClick = false, FullWidth = true };
-        var parameters = new DialogParameters { ["User"] = User };
+        var parameters = new DialogParameters { ["User"] = User, ["Table"] = table};
         await Dialog.ShowAsync<CreateUserDialog>(User == null ? "New User" : "Edit User", options: _backdropClick, parameters: parameters);
     }
 

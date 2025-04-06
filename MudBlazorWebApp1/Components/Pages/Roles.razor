@@ -87,7 +87,7 @@
     private async Task OpenDialogAsync(Role? role = null)
     {
         var options = new DialogOptions { BackdropClick = false, FullWidth = true };
-        var parameters = new DialogParameters { ["Role"] = role };
+        var parameters = new DialogParameters { ["Role"] = role ,["Table"] = table};
         await Dialog.ShowAsync<CreateRoleDialog>(role == null ? "New Role" : "Edit Role", options: options, parameters: parameters);
         await table.ReloadServerData();
     }

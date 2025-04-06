@@ -30,7 +30,7 @@
                             <MudSelectItem T="User" Value="@user">@($"{user.FirstName} {user.LastName}")</MudSelectItem>
                         }
                     </MudSelect>
-                   
+
                 </MudGrid>
             }
             <MudButton OnClick="Cancel" Class="mt-5">Cancel</MudButton>
@@ -44,6 +44,8 @@
     private IMudDialogInstance MudDialog { get; set; }
     [Parameter]
     public Team? Team { get; set; }
+    [Parameter]
+    public MudTable<Team> Table { get; set; }
     private bool IsEditMode => Team != null;
 
     private void Cancel() => MudDialog.Cancel();
@@ -104,6 +106,7 @@
             await ApplicationContext.AddAsync(team);
         }
         await ApplicationContext.SaveChangesAsync();
+        await Table.ReloadServerData();
         MudDialog.Close(DialogResult.Ok(true));
     }
 }

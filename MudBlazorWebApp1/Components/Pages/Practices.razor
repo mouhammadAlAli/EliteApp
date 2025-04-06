@@ -109,21 +109,19 @@
     private async Task OpenDialogAsync(Practice? practice = null)
     {
         var options = new DialogOptions { BackdropClick = false, FullWidth = true };
-        var parameters = new DialogParameters { ["Practice"] = practice };
+        var parameters = new DialogParameters { ["Practice"] = practice,["Table"] = table };
         await Dialog.ShowAsync<CreatePracticeDialog>(practice == null ? "New Practice" : "Edit Practice", options: options, parameters: parameters);
         // await table.ReloadServerData();
-        StateHasChanged();
-        await table.ReloadServerData();
+        // StateHasChanged();
+        // await table.ReloadServerData();
     }
     private async Task OpenDialogAsync(Guid? practiceGuid)
     {
         if(practiceGuid.HasValue)
         {
             var options = new DialogOptions { BackdropClick = false, FullWidth = true };
-            var parameters = new DialogParameters { ["PracticeGuid"] = practiceGuid };
+            var parameters = new DialogParameters { ["PracticeGuid"] = practiceGuid, ["Table"] = table };
             await Dialog.ShowAsync<AddDoctorToPracticeDialog>("Add Doctor", options: options, parameters: parameters);
-            StateHasChanged();
-            await table.ReloadServerData();
         }
     }
     private async Task DeleteAsync(User user)

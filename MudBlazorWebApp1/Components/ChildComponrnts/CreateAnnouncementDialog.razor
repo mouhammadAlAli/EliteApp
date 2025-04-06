@@ -51,7 +51,7 @@
 
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
-
+    [Parameter] public MudTable<Announcement> Table { get; set; }
     [Parameter] public Announcement? SelectedAnnouncement { get; set; }
 
     private IBrowserFile Attachment { set; get; }
@@ -161,6 +161,7 @@
             await AttachmentService.UploadFileAsync(Attachment, Data.Enums.AttachmentRefType.Announcement, SelectedAnnouncement.Id);
         }
         await ApplicationContext.SaveChangesAsync();
+        await Table.ReloadServerData();
         MudDialog.Close(DialogResult.Ok(true));
     }
 }
